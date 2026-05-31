@@ -1,18 +1,14 @@
-# build.yaml — ts_schemix_generator
-#
-# Registers the TypeScript interface generator with the schemix_build
-# infrastructure. The actual .d.ts files are written by schemix_build's
-# SchemixFileBuilder once it is extended to support the 'ts' generator id.
-
 builders:
   tsBuilder:
-    import: "package:ts_schemix_generator/ts_schemix_generator.dart"
+    import: "package:ts_schemix_generator/builder.dart"
     builder_factories: ["tsBuilder"]
     build_extensions:
+      # This builder produces no files directly — it only registers the generator.
+      # The actual .d.ts files are written by schemix_builder's SchemixFileBuilder.
       "lib/$lib$": []
     auto_apply: dependents
     build_to: cache
     required_inputs:
       - "lib/schemix_registry.json"
     runs_before:
-      - "schemix_build|schemixFileBuilder"
+      - "schemix_builder|schemix_file"

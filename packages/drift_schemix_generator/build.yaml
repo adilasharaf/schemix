@@ -1,19 +1,11 @@
 builders:
   drift_schemix_generator:
-    import: "package:drift_schemix_generator/drift_schemix_generator.dart"
+    import: "package:drift_schemix_generator/builder.dart"
     builder_factories: ["driftBuilder"]
-    # The drift generator produces a single .table.dart per source .dart.
     build_extensions:
       "^lib/{{}}.dart":
         - "lib/{{}}.table.dart"
     auto_apply: dependents
     build_to: source
-    # Must run after the scan phase has written the registry.
     required_inputs:
       - "$package$lib/schemix_registry.json"
-    options:
-      # Import name used in the generated file header:
-      #   import 'package:<models_package>/<models_package>.dart';
-      # Override in the consuming package's build.yaml if your models live
-      # in a differently-named package.
-      models_package: "models"

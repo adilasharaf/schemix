@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:schemix/schemix.dart';
 
@@ -11,11 +12,10 @@ Builder schemixFileBuilder(BuilderOptions options) =>
     _SchemixFileBuilder(options);
 
 final class _SchemixFileBuilder implements Builder {
+  const _SchemixFileBuilder(this._options);
   final BuilderOptions _options;
 
-  const _SchemixFileBuilder(this._options);
-
-  static final _log = SchemixLogger('builder');
+  static final _log = const SchemixLogger('builder');
 
   static const _registryAsset = 'lib/schemix_registry.json';
 
@@ -208,7 +208,10 @@ final class _SchemixFileBuilder implements Builder {
     }
   }
 
-  Future<dynamic> _resolveLibrary(BuildStep buildStep, AssetId inputId) async {
+  Future<LibraryElement?> _resolveLibrary(
+    BuildStep buildStep,
+    AssetId inputId,
+  ) async {
     try {
       return await buildStep.inputLibrary;
     } catch (e, st) {

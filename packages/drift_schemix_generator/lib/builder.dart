@@ -1,10 +1,7 @@
 import 'package:build/build.dart';
-import 'package:schemix_builder/schemix_builder.dart'
-    show schemixFileBuilder, GeneratorRegistry;
+import 'package:schemix_builder/schemix_builder.dart';
 
-import 'generator.dart';
-
-export 'generator.dart' show DriftGenerator;
+import 'src/generator.dart';
 
 /// Builder factory entry point declared in `build.yaml`.
 ///

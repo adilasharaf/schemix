@@ -1,5 +1,5 @@
 import 'package:schemix/models.dart';
-import 'package:schemix_builder/src/logger.dart';
+import 'package:schemix_builder/schemix_builder.dart';
 
 import 'column_builder.dart';
 import 'utils.dart';
@@ -14,9 +14,8 @@ import 'utils.dart';
 /// - `uniqueKeys` override (composite unique indexes from `@CompositeIndex`)
 /// - Static `TypeConverter` getters for every enum field
 final class DriftTableOverridesBuilder {
-  final DriftColumnBuilder _columnBuilder;
-
   const DriftTableOverridesBuilder(this._columnBuilder);
+  final DriftColumnBuilder _columnBuilder;
 
   // ── Enum converters ────────────────────────────────────────────────────
 

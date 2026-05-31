@@ -29,6 +29,12 @@ abstract interface class TypeGraph {
 
 /// Per-invocation context passed to [SchemixGenerator.generate].
 final class GeneratorContext {
+  const GeneratorContext({
+    required this.typeGraph,
+    required this.options,
+    required this.sourceAssetPath,
+  });
+
   /// Read-only view of the full type graph for cross-file lookups.
   final TypeGraph typeGraph;
 
@@ -37,22 +43,15 @@ final class GeneratorContext {
 
   /// Asset path of the source `.dart` file being processed, e.g. `lib/models/user.dart`.
   final String sourceAssetPath;
-
-  const GeneratorContext({
-    required this.typeGraph,
-    required this.options,
-    required this.sourceAssetPath,
-  });
 }
 
 /// Output produced by a single [SchemixGenerator.generate] call.
 /// Keys are file extensions (e.g. `'.g.ts'`, `'.drizzle.ts'`);
 /// values are the file contents. An empty or null value means no file is written.
 final class GeneratorOutput {
-  final Map<String, String?> outputs;
-
   const GeneratorOutput(this.outputs);
   const GeneratorOutput.empty() : outputs = const {};
+  final Map<String, String?> outputs;
 }
 
 /// Contract every Schemix generator must implement.

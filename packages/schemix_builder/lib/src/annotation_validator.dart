@@ -6,7 +6,7 @@ import 'package:source_gen/source_gen.dart';
 /// Throws [InvalidGenerationSourceError] on the first conflict found so
 /// build_runner surfaces a precise error pointing to the source location.
 abstract final class AnnotationValidator {
-  static void validate(ClassInfo classInfo, ClassElement element) {
+  static void validate(ClassInfo classInfo, ClassElement? element) {
     for (final field in classInfo.allFields) {
       if (field.isIgnored) continue;
 
@@ -56,9 +56,9 @@ abstract final class AnnotationValidator {
     throw InvalidGenerationSourceError(message, element: element);
   }
 
-  static FieldElement? _fieldElement(ClassElement classEl, String fieldName) {
+  static FieldElement? _fieldElement(ClassElement? classEl, String fieldName) {
     try {
-      return classEl.fields.firstWhere((f) => f.name == fieldName);
+      return classEl?.fields.firstWhere((f) => f.name == fieldName);
     } catch (_) {
       return null;
     }

@@ -1,10 +1,8 @@
-import 'package:schemix/models.dart';
-import 'package:schemix/src/generator_api.dart';
+import 'package:schemix/schemix.dart';
 
 final class JsonExprBuilder {
-  final TypeGraph _graph;
-
   const JsonExprBuilder(this._graph);
+  final TypeGraph _graph;
 
   String fromJson(FieldInfo field, String src) {
     final nullable = field.isNullable;

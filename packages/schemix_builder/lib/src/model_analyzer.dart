@@ -8,10 +8,9 @@ import 'logger.dart';
 import 'registry.dart';
 
 class ModelAnalyzer {
-  final CrossFileRegistry _registry;
-  static final _log = SchemixLogger('analyzer');
-
   ModelAnalyzer(this._registry);
+  final CrossFileRegistry _registry;
+  static final _log = const SchemixLogger('analyzer');
 
   List<ClassInfo> analyzeLibrary(LibraryElement library, String assetPath) {
     _log.verbose(

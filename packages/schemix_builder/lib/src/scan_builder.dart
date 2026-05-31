@@ -9,12 +9,13 @@ import 'package:schemix/schemix.dart';
 import 'logger.dart';
 import 'registry.dart';
 
-Builder schemixScanBuilder(BuilderOptions options) => _SchemixScanBuilder();
+Builder schemixScanBuilder(BuilderOptions options) =>
+    const _SchemixScanBuilder();
 
 final class _SchemixScanBuilder implements Builder {
   const _SchemixScanBuilder();
 
-  static final _log = SchemixLogger('scan');
+  static final _log = const SchemixLogger('scan');
 
   @override
   Map<String, List<String>> get buildExtensions => const {

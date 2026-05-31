@@ -1,10 +1,10 @@
 builders:
   serializable_schemix_generator:
-    import: "package:serializable_schemix_generator/serializable_schemix_generator.dart"
+    import: "package:serializable_schemix_generator/builder.dart"
     builder_factories: ["serializableBuilder"]
     build_extensions:
-      ".dart":
-        - ".schemix.dart"
+      "^lib/{{}}.dart":
+        - "lib/{{}}.schemix.dart"
     auto_apply: dependents
     build_to: source
     required_inputs:

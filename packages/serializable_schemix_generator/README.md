@@ -1,29 +1,28 @@
 # serializable_schemix_generator
 
-Dart JSON serialization generator for the [Schemix](https://github.com/adilasharaf/schemix) ecosystem. Generates `fromJson`, `toJson`, and `_$copy` helpers from `@Schemix`-annotated classes.
+Dart JSON serialization generator for the [Schemix](https://github.com/adilasharaf/schemix) ecosystem. Generates `_$NameFromJson`, `_$NameToJson`, and `_$NameCopy` helpers as a `part` file from every `@Schemix`-annotated class.
 
-This is the reference implementation for Schemix generator packages. Future generators (`schemix_zod_generator`, `schemix_drift_generator`, etc.) follow the same architecture.
+This is the reference implementation for Schemix generator packages. Its layout, naming conventions, and contracts are the pattern all other generators follow.
 
 ---
 
 ## Installation
 
-This package is a build-time tool. Add it to `dev_dependencies`:
+This package is a build-time tool. Add it to `dev_dependencies` only:
 
 ```yaml
+# pubspec.yaml
 dependencies:
   schemix: ^1.0.24
 
 dev_dependencies:
-  serializable_schemix_generator: ^0.1.0
+  serializable_schemix_generator: any
   build_runner: ^2.15.0
 ```
 
-This package uses workspace resolution. Ensure your root `pubspec.yaml` includes it in the workspace.
-
 ---
 
-## Usage
+## Quick Start
 
 Annotate your model with `@Schemix` and run the build:
 
@@ -55,7 +54,7 @@ class User {
 dart run build_runner build
 ```
 
-This produces `user.schemix.dart` as a part file containing:
+This produces `lib/user.schemix.dart` as a part file containing:
 
 ```dart
 User _$UserFromJson(Map<String, dynamic> json) => User(
@@ -79,40 +78,45 @@ User _$UserCopy(User src) => User(
 
 ---
 
-## Supported field types
+## Configuration
 
-| Type                                     | `fromJson`                            | `toJson`                    |
-| ---------------------------------------- | ------------------------------------- | --------------------------- |
-| `String`, `int`, `double`, `num`, `bool` | direct cast                           | passthrough                 |
-| `DateTime`                               | `DateTime.parse(src)`                 | `.toIso8601String()`        |
-| Enum                                     | `.values.byName(src)`                 | `.name`                     |
-| Enum with `@EnumFallback`                | `_$safeByName(values, src, fallback)` | `.name`                     |
-| Nested `@Schemix` model                  | `T.fromJson(src)`                     | `.toJson()`                 |
-| `@Embedded` model                        | same as nested                        | same as nested              |
-| `List<T>`                                | `.map((e) => ...).toList()`           | `.map((e) => ...).toList()` |
-| `Map<String, T>`                         | `.cast<String, T>()`                  | passthrough                 |
-| Nullable variants                        | null-guarded form of the above        | null-aware operators        |
+No generator-specific `build.yaml` options are required. The generator is enabled automatically when the package is in `dev_dependencies`.
 
 ---
 
-## Serialization annotations
+## What Gets Generated
 
-| Annotation          | Effect                                                   |
-| ------------------- | -------------------------------------------------------- |
-| `@JsonField('key')` | Uses `key` as the JSON field name instead of the default |
-| `@IgnoreField()`    | Excludes the field from all serialization output         |
-| `@ReadOnlyField()`  | Field appears in `fromJson` but is skipped in `toJson`   |
-| `@WriteOnlyField()` | Field appears in `toJson` but is skipped in `fromJson`   |
+### Field type mapping
 
-JSON key names default to the Dart field name. Snake case fallback applies when the class uses manual serialization.
+| Dart type                                | `fromJson`                                | `toJson`                    |
+| ---------------------------------------- | ----------------------------------------- | --------------------------- |
+| `String`, `int`, `double`, `num`, `bool` | direct cast (`as T`)                      | passthrough                 |
+| `DateTime`                               | `DateTime.parse(src as String)`           | `.toIso8601String()`        |
+| `DateTime` (nullable)                    | null-guard + `DateTime.parse(...)`        | `?.toIso8601String()`       |
+| Enum                                     | `T.values.byName(src as String)`          | `.name`                     |
+| Enum with `@EnumFallback`                | `_$safeByName(values, src, fallback)`     | `.name`                     |
+| Nested `@Schemix` model                  | `T.fromJson(src as Map<String, dynamic>)` | `.toJson()`                 |
+| `@Embedded` model                        | same as nested model                      | same as nested model        |
+| `List<T>`                                | `.map((e) => e as T).toList()`            | `.map((e) => ...).toList()` |
+| `Map<String, T>`                         | `.cast<String, T>()`                      | passthrough                 |
+| Nullable variants                        | null-guard form of the above              | null-aware operators (`?.`) |
 
----
+### Serialization annotations
 
-## Constructor strategies
+| Annotation          | Effect                                                           |
+| ------------------- | ---------------------------------------------------------------- |
+| `@JsonField('key')` | Uses `key` as the JSON field name instead of the Dart field name |
+| `@IgnoreField()`    | Excludes the field from all serialization output                 |
+| `@ReadOnlyField()`  | Field appears in `fromJson` but is skipped in `toJson`           |
+| `@WriteOnlyField()` | Field appears in `toJson` but is skipped in `fromJson`           |
 
-The generator reads `ClassInfo.ctorParamNames` (populated by `schemix_builder`) to determine how to construct instances in `fromJson` and `_$copy`.
+JSON key names default to the Dart field name. Snake case fallback applies when the class uses manual serialization (has `fromJson`/`toJson` methods but no `@JsonSerializable`).
 
-**Named constructor parameters** — fields that appear in the primary constructor are emitted as named arguments:
+### Constructor strategies
+
+The generator reads `ClassInfo.ctorParamNames` to determine how to construct instances in `fromJson` and `_$Copy`.
+
+**Named constructor parameters** — fields in the primary constructor are emitted as named arguments:
 
 ```dart
 User _$UserFromJson(Map<String, dynamic> json) => User(
@@ -139,77 +143,68 @@ Config _$ConfigFromJson(Map<String, dynamic> json) => Config()
 
 ---
 
-## Package layout
+## What Gets Skipped
+
+### Fields
+
+| Condition         | Skipped from                   | Reason                                       |
+| ----------------- | ------------------------------ | -------------------------------------------- |
+| `@IgnoreField`    | `fromJson` + `toJson` + `copy` | Excluded from all serialization output       |
+| `@ReadOnlyField`  | `toJson`                       | Field is read-only; not written back to JSON |
+| `@WriteOnlyField` | `fromJson`                     | Field is write-only; not read from JSON      |
+
+### Classes
+
+| Condition                | Reason                                                            |
+| ------------------------ | ----------------------------------------------------------------- |
+| `isEnum == true`         | Enums have no `fromJson`/`toJson` to generate                     |
+| `abstractSchema == true` | Abstract schemas are base types only; never instantiated directly |
+| `hasSchemix == false`    | Class has no `@Schemix` annotation                                |
+
+---
+
+## Package Structure
 
 ```
-serializable_schemix_generator/
-├── pubspec.yaml
-├── build.yaml
-├── lib/
-│   ├── serializable_schemix_generator.dart   ← public API
-│   └── src/
-│       ├── builder.dart       ← registers the generator and returns the builder
-│       ├── generator.dart     ← SerializableGenerator implements SchemixGenerator
-│       ├── header.dart        ← emits the part file header and _$safeByName helper
-│       ├── expr_builder.dart  ← type-dispatch logic for fromJson/toJson expressions
-│       ├── from_json.dart     ← generates _$NameFromJson
-│       ├── to_json.dart       ← generates _$NameToJson
-│       ├── copy.dart          ← generates _$NameCopy
-│       └── ctor_params.dart   ← resolves constructor parameter names
-└── test/
+lib/
+├── serializable_schemix_generator.dart   ← public barrel (SerializableGenerator, serializableBuilder)
+├── builder.dart                          ← builder factory; registers SerializableGenerator
+└── src/
+    ├── generator.dart       ← SerializableGenerator implements SchemixGenerator; assembleFile() helper
+    ├── header.dart          ← part file header + _$safeByName helper emission
+    ├── expr_builder.dart    ← JsonExprBuilder: FieldInfo → fromJson / toJson expression strings
+    ├── from_json.dart       ← FromJsonGenerator: ClassInfo → _$NameFromJson function
+    ├── to_json.dart         ← ToJsonGenerator: ClassInfo → _$NameToJson function
+    ├── copy.dart            ← CopyGenerator: ClassInfo → _$NameCopy function
+    └── ctor_params.dart     ← CtorParamResolver: determines constructor vs. cascade strategy
 ```
 
 The public API exports only `SerializableGenerator` and `serializableBuilder`. Everything under `src/` is internal.
 
 ---
 
-## How it fits into the build pipeline
+## How It Fits Into the Build Pipeline
 
 ```
-Phase 1 — schemix_builder scan builder
-  Reads all lib/**.dart files, emits lib/schemix_registry.json
+Phase 1 — schemix_builder|schemix_scan
+  Reads lib/**.dart, writes lib/schemix_registry.json
 
-Phase 2 — schemix_builder file builder
-  Reads one .dart file + schemix_registry.json
-  Dispatches to registered generators by id
-  serializable_schemix_generator handles id='serializable'
-  Writes lib/{name}.schemix.dart
-
-Phase 3 — schemix_builder index builder
-  Reads all gen/**.g.ts, emits gen/schemix.g.ts barrel
+Phase 2 — schemix_builder|schemix_file
+  Dispatches to SerializableGenerator (id='serializable') once per class
+  Writes lib/{name}.schemix.dart as a Dart part file
 ```
 
-`serializable_schemix_generator` runs in Phase 2. It never reads the registry directly — `schemix_builder` passes a resolved `TypeGraph` through `GeneratorContext`.
+`SerializableGenerator` never reads `schemix_registry.json` directly. The resolved `TypeGraph` is provided through `GeneratorContext` by `schemix_builder`. Constructor parameter names are resolved from `ClassInfo.ctorParamNames`, which is populated by `ModelAnalyzer` during Phase 2.
+
+The part file header includes a `part of '{filename}.dart'` directive and a `_$safeByName` helper (used for enums with `@EnumFallback`). The header is emitted once per file by `assembleFile`, not per class.
 
 ---
 
-## Writing a generator that follows this pattern
+## Rules This Package Must Never Break
 
-This package is the reference implementation. The layout, naming conventions, and contracts below apply to all Schemix generator packages.
-
-**Rules**
-
-- Implement `SchemixGenerator` from `package:schemix/src/generator_api.dart`
-- Register via `GeneratorRegistry.register(MyGenerator())` in the builder factory, then return `schemixFileBuilder(options)`
-- Never depend on `schemix_builder` in `dependencies` — only in `dev_dependencies`
-- Never import `analyzer` or `source_gen` directly
-- One file per concern under `lib/src/`
-- Export only the generator class and builder factory from the public entry point
-
-**`build.yaml` template**
-
-```yaml
-builders:
-  my_generator:
-    import: "package:my_generator/my_generator.dart"
-    builder_factories: ["myBuilder"]
-    build_extensions:
-      ".dart":
-        - ".my.dart"
-    auto_apply: dependents
-    build_to: source
-    required_inputs:
-      - "$package$lib/schemix_registry.json"
-```
-
-`required_inputs` on `schemix_registry.json` is mandatory — it ensures the scan phase completes first and that `build_runner` invalidates outputs when the type graph changes.
+- Does not depend on any other Schemix generator package.
+- Does not depend on `schemix_builder` at runtime — only in `dev_dependencies`.
+- Does not import private `src/` paths from `schemix` or `schemix_builder`.
+- The generated part file must always begin with `// GENERATED BY SCHEMIX — DO NOT EDIT.` and a `part of '...'` directive — omitting either breaks `dart analyze`.
+- `_$safeByName` must always be emitted in the file header regardless of whether any field uses `@EnumFallback`, so the generated code compiles without conditional imports.
+- `JsonExprBuilder` is the single source of truth for `fromJson`/`toJson` expression logic; `FromJsonGenerator`, `ToJsonGenerator`, and `CopyGenerator` must not contain their own type-dispatch logic.

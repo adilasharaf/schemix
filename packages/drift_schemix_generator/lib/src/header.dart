@@ -1,12 +1,12 @@
 /// Assembles the file-level comment block and import statements that appear at
 /// the top of every generated `.table.dart` file.
 final class DriftHeader {
+  const DriftHeader({this.modelsPackage = 'models'});
+
   /// The Dart package name that exports the user's model classes.
   /// Defaults to `'models'`; configurable via `build.yaml` options as
   /// `models_package`.
   final String modelsPackage;
-
-  const DriftHeader({this.modelsPackage = 'models'});
 
   /// Returns the header lines for a file that was generated from [assetPath].
   List<String> build(String assetPath) => [

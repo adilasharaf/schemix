@@ -1,13 +1,12 @@
 import 'package:schemix/models.dart';
-import 'package:schemix_builder/src/logger.dart';
+import 'package:schemix_builder/schemix_builder.dart';
 
 import 'expr_builder.dart';
 
 final class FromJsonGenerator {
+  const FromJsonGenerator(this._expr, this._log);
   final JsonExprBuilder _expr;
   final SchemixLogger _log;
-
-  const FromJsonGenerator(this._expr, this._log);
 
   String generate(
     ClassInfo cls, {

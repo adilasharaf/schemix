@@ -9,7 +9,7 @@ import 'logger.dart';
 /// Implements [TypeGraph] so it can be passed directly to [GeneratorContext]
 /// in Phase 2 without an adapter.
 class CrossFileRegistry implements TypeGraph {
-  static final _log = SchemixLogger('registry');
+  static final _log = const SchemixLogger('registry');
 
   final Map<String, TypeInfo> _types = {};
   final List<RelationInfo> _relations = [];

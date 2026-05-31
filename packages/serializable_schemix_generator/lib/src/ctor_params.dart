@@ -6,9 +6,8 @@ import 'package:schemix_builder/schemix_builder.dart';
 /// Returns an empty set when the class uses a no-arg constructor — generators
 /// should use cascade assignments for all fields in that case.
 final class CtorParamResolver {
-  final SchemixLogger _log;
-
   const CtorParamResolver(this._log);
+  final SchemixLogger _log;
 
   Set<String> resolve(ClassInfo cls) {
     if (cls.ctorParamNames.isNotEmpty) {

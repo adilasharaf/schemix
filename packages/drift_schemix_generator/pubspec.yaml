@@ -12,34 +12,14 @@ environment:
 resolution: workspace
 
 dependencies:
-  # Core Schemix contracts, annotations, and metadata models
   schemix: any
-
-  # Build infrastructure — needed to access CrossFileRegistry, source_parser,
-  # and other schemix_builder internals during testing only.
-  # Must never appear in dependencies: generators must not depend on schemix_builder
-  # at runtime. See: https://github.com/adilasharaf/schemix/README.md#package-map
-  schemix_builder: any
-
-  # Builder APIs and build system integration
   build: ^4.0.6
-
-  # Drift — only needed so that generated code can be compiled in tests
-  # (imports `package:drift/drift.dart`). Not used by the generator itself.
-  drift: ^2.31.0
-
-  # uuid — referenced in generated client-default PK expressions.
-  uuid: ^4.0.0
+  schemix_builder: any
+  test: ^1.31.1
 
 dev_dependencies:
-  # Execute builders during development
+  drift: ^2.31.0
+  uuid: ^4.0.0
   build_runner: ^2.15.0
-
-  # Test builders and generated outputs
   build_test: ^3.5.15
-
-  # Unit testing
-  test: ^1.30.0
-
-  # Dart lints
   lints: ^6.1.0

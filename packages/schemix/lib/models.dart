@@ -3,26 +3,17 @@
 import 'package:schemix/src/utils.dart';
 
 class FieldPlatformFlags {
-  final bool driftIgnore;
-  final bool drizzleIgnore;
-  final bool zodIgnore;
-
   const FieldPlatformFlags({
     this.driftIgnore = false,
     this.drizzleIgnore = false,
     this.zodIgnore = false,
   });
+  final bool driftIgnore;
+  final bool drizzleIgnore;
+  final bool zodIgnore;
 }
 
 class FieldSecurityInfo {
-  final bool encrypted;
-  final bool hashed;
-  final bool sensitive;
-  final bool maskInLogs;
-  final String? permissionRequired;
-  final List<String> readScopes;
-  final List<String> writeScopes;
-
   const FieldSecurityInfo({
     this.encrypted = false,
     this.hashed = false,
@@ -32,62 +23,41 @@ class FieldSecurityInfo {
     this.readScopes = const [],
     this.writeScopes = const [],
   });
+  final bool encrypted;
+  final bool hashed;
+  final bool sensitive;
+  final bool maskInLogs;
+  final String? permissionRequired;
+  final List<String> readScopes;
+  final List<String> writeScopes;
 }
 
 class FieldSyncInfo {
-  final bool offlineOnly;
-  final bool cloudOnly;
-  final bool operationTracked;
-  final int? syncPriority;
-
   const FieldSyncInfo({
     this.offlineOnly = false,
     this.cloudOnly = false,
     this.operationTracked = false,
     this.syncPriority,
   });
+  final bool offlineOnly;
+  final bool cloudOnly;
+  final bool operationTracked;
+  final int? syncPriority;
 }
 
 /// Visibility of the field in API DTOs.
 class FieldApiInfo {
-  final bool expose;
-  final bool readonly;
-  final bool deprecated;
-
   const FieldApiInfo({
     this.expose = true,
     this.readonly = false,
     this.deprecated = false,
   });
+  final bool expose;
+  final bool readonly;
+  final bool deprecated;
 }
 
 class FieldDbInfo {
-  final bool isPrimaryKey;
-  final bool autoGenerate;
-  final int? compositeOrder;
-  final bool clustered;
-  final bool isSecondaryKey;
-  final bool isUnique;
-  final bool isAutoIncrement;
-  final bool isDatabaseGenerated;
-  final String? dbGeneratedStrategy;
-  final String? sqlType;
-  final String? drizzleType;
-  final String? driftType;
-  final dynamic databaseDefault;
-  final String? checkConstraint;
-  final bool isIndexed;
-  final String? indexName;
-  final bool indexUnique;
-  final bool indexDescending;
-  final bool indexFullText;
-  final bool indexSpatial;
-  final bool isPartitionKey;
-  final bool isSortKey;
-  final bool sortKeyDescending;
-  final bool isFullTextSearch;
-  final bool isCachedField;
-
   const FieldDbInfo({
     this.isPrimaryKey = false,
     this.autoGenerate = false,
@@ -115,18 +85,34 @@ class FieldDbInfo {
     this.isFullTextSearch = false,
     this.isCachedField = false,
   });
+  final bool isPrimaryKey;
+  final bool autoGenerate;
+  final int? compositeOrder;
+  final bool clustered;
+  final bool isSecondaryKey;
+  final bool isUnique;
+  final bool isAutoIncrement;
+  final bool isDatabaseGenerated;
+  final String? dbGeneratedStrategy;
+  final String? sqlType;
+  final String? drizzleType;
+  final String? driftType;
+  final dynamic databaseDefault;
+  final String? checkConstraint;
+  final bool isIndexed;
+  final String? indexName;
+  final bool indexUnique;
+  final bool indexDescending;
+  final bool indexFullText;
+  final bool indexSpatial;
+  final bool isPartitionKey;
+  final bool isSortKey;
+  final bool sortKeyDescending;
+  final bool isFullTextSearch;
+  final bool isCachedField;
 }
 
 class FieldRelationInfo {
-  final RelationKind? kind;
-  final String? targetTypeName;
-  final String? junctionTable;
-  final String? relationName;
-  final bool isEmbedded;
-  final bool isCascadeDelete;
-  final bool isLazy;
-  final String? relationFieldName;
-
   const FieldRelationInfo({
     this.kind,
     this.targetTypeName,
@@ -137,22 +123,19 @@ class FieldRelationInfo {
     this.isLazy = false,
     this.relationFieldName,
   });
+  final RelationKind? kind;
+  final String? targetTypeName;
+  final String? junctionTable;
+  final String? relationName;
+  final bool isEmbedded;
+  final bool isCascadeDelete;
+  final bool isLazy;
+  final String? relationFieldName;
 
   bool get hasRelation => kind != null || isEmbedded;
 }
 
 class FieldSerializationInfo {
-  final String? jsonKeyName;
-  final bool isIgnored;
-  final bool isReadOnly;
-  final bool isWriteOnly;
-  final String? serializeAs;
-  final bool flatten;
-  final String? dateFormat;
-  final int? precisionDigits;
-  final int? precisionScale;
-  final bool useSnakeCaseFallback;
-
   const FieldSerializationInfo({
     this.jsonKeyName,
     this.isIgnored = false,
@@ -165,6 +148,16 @@ class FieldSerializationInfo {
     this.precisionScale,
     this.useSnakeCaseFallback = false,
   });
+  final String? jsonKeyName;
+  final bool isIgnored;
+  final bool isReadOnly;
+  final bool isWriteOnly;
+  final String? serializeAs;
+  final bool flatten;
+  final String? dateFormat;
+  final int? precisionDigits;
+  final int? precisionScale;
+  final bool useSnakeCaseFallback;
 
   String effectiveJsonName(String dartFieldName) {
     if (jsonKeyName != null) return jsonKeyName!;
@@ -174,17 +167,6 @@ class FieldSerializationInfo {
 }
 
 class FieldConverterInfo {
-  final bool hasDateTimeConverter;
-  final bool hasDateTimeListConverter;
-  final bool hasDateTimeNullableConverter;
-  final String? customConverterClass;
-  final String? tsConverter;
-  final String? converterSqlType;
-  final String? converterDrizzleType;
-  final String? tsTypeOverride;
-  final String? zodSchemaOverride;
-  final String? zodTypeOverride;
-
   const FieldConverterInfo({
     this.hasDateTimeConverter = false,
     this.hasDateTimeListConverter = false,
@@ -197,23 +179,19 @@ class FieldConverterInfo {
     this.zodSchemaOverride,
     this.zodTypeOverride,
   });
+  final bool hasDateTimeConverter;
+  final bool hasDateTimeListConverter;
+  final bool hasDateTimeNullableConverter;
+  final String? customConverterClass;
+  final String? tsConverter;
+  final String? converterSqlType;
+  final String? converterDrizzleType;
+  final String? tsTypeOverride;
+  final String? zodSchemaOverride;
+  final String? zodTypeOverride;
 }
 
 class FieldValidation {
-  final bool required;
-  final num? min;
-  final num? max;
-  final int? minLength;
-  final int? maxLength;
-  final String? regex;
-  final bool isEmail;
-  final bool isUrl;
-  final bool isPhone;
-  final bool isIpAddress;
-  final bool isUuid;
-  final List<dynamic> allowedValues;
-  final List<dynamic> disallowedValues;
-
   const FieldValidation({
     this.required = false,
     this.min,
@@ -229,6 +207,19 @@ class FieldValidation {
     this.allowedValues = const [],
     this.disallowedValues = const [],
   });
+  final bool required;
+  final num? min;
+  final num? max;
+  final int? minLength;
+  final int? maxLength;
+  final String? regex;
+  final bool isEmail;
+  final bool isUrl;
+  final bool isPhone;
+  final bool isIpAddress;
+  final bool isUuid;
+  final List<dynamic> allowedValues;
+  final List<dynamic> disallowedValues;
 
   bool get hasConstraints =>
       required ||
@@ -249,6 +240,38 @@ class FieldValidation {
 // ── Field ────────────────────────────────────────────────────────────────────
 
 class FieldInfo {
+  const FieldInfo({
+    required this.name,
+    required this.dartType,
+    required this.isNullable,
+    this.isList = false,
+    this.isMap = false,
+    this.listItemType,
+    this.mapValueType,
+    this.isEnum = false,
+    this.isLate = false,
+    this.isRequired = false,
+    this.immutable = false,
+    this.readonly = false,
+    this.hidden = false,
+    this.internal = false,
+    this.unique = false,
+    this.isCreatedAt = false,
+    this.isUpdatedAt = false,
+    this.isDeletedAt = false,
+    this.isVersionField = false,
+    this.isAuditField = false,
+    this.db = const FieldDbInfo(),
+    this.relation = const FieldRelationInfo(),
+    this.serialization = const FieldSerializationInfo(),
+    this.converter = const FieldConverterInfo(),
+    this.validation = const FieldValidation(),
+    this.security = const FieldSecurityInfo(),
+    this.sync = const FieldSyncInfo(),
+    this.api = const FieldApiInfo(),
+    this.platform = const FieldPlatformFlags(),
+    this.extensions = const {},
+  });
   final String name;
   final String dartType;
   final bool isNullable;
@@ -282,39 +305,6 @@ class FieldInfo {
   /// Open slot for generator-specific metadata. Keyed by the generator id.
   final Map<String, Object?> extensions;
 
-  const FieldInfo({
-    required this.name,
-    required this.dartType,
-    required this.isNullable,
-    this.isList = false,
-    this.isMap = false,
-    this.listItemType,
-    this.mapValueType,
-    this.isEnum = false,
-    this.isLate = false,
-    this.isRequired = false,
-    this.immutable = false,
-    this.readonly = false,
-    this.hidden = false,
-    this.internal = false,
-    this.unique = false,
-    this.isCreatedAt = false,
-    this.isUpdatedAt = false,
-    this.isDeletedAt = false,
-    this.isVersionField = false,
-    this.isAuditField = false,
-    this.db = const FieldDbInfo(),
-    this.relation = const FieldRelationInfo(),
-    this.serialization = const FieldSerializationInfo(),
-    this.converter = const FieldConverterInfo(),
-    this.validation = const FieldValidation(),
-    this.security = const FieldSecurityInfo(),
-    this.sync = const FieldSyncInfo(),
-    this.api = const FieldApiInfo(),
-    this.platform = const FieldPlatformFlags(),
-    this.extensions = const {},
-  });
-
   String get effectiveJsonName => serialization.effectiveJsonName(name);
   bool get isIgnored => serialization.isIgnored;
   bool get isLifecycleField =>
@@ -324,32 +314,6 @@ class FieldInfo {
 // ── Class ────────────────────────────────────────────────────────────────────
 
 class ClassInfo {
-  final String name;
-  final String assetPath;
-  final bool isEnum;
-  final List<String> enumValues;
-  final List<FieldInfo> ownFields;
-  final List<FieldInfo> inheritedFields;
-  final String? superclassName;
-  final bool hasSchemix;
-  final bool hasJsonSerializable;
-  final bool hasManualSerialization;
-  final String? tableName;
-  final String? collectionName;
-  final int schemaVersion;
-  final String? namespace;
-  final bool enableTimestamps;
-  final bool enableSoftDelete;
-  final bool abstractSchema;
-  final bool cacheable;
-  final bool syncable;
-  final bool embeddable;
-  final GeneratorFlags generators;
-  final SyncMeta sync;
-  final bool manualImplementation;
-  final List<CompositeIndexInfo> compositeIndexes;
-  final Set<String> ctorParamNames;
-
   const ClassInfo({
     required this.name,
     required this.assetPath,
@@ -377,6 +341,31 @@ class ClassInfo {
     this.compositeIndexes = const [],
     this.ctorParamNames = const {},
   });
+  final String name;
+  final String assetPath;
+  final bool isEnum;
+  final List<String> enumValues;
+  final List<FieldInfo> ownFields;
+  final List<FieldInfo> inheritedFields;
+  final String? superclassName;
+  final bool hasSchemix;
+  final bool hasJsonSerializable;
+  final bool hasManualSerialization;
+  final String? tableName;
+  final String? collectionName;
+  final int schemaVersion;
+  final String? namespace;
+  final bool enableTimestamps;
+  final bool enableSoftDelete;
+  final bool abstractSchema;
+  final bool cacheable;
+  final bool syncable;
+  final bool embeddable;
+  final GeneratorFlags generators;
+  final SyncMeta sync;
+  final bool manualImplementation;
+  final List<CompositeIndexInfo> compositeIndexes;
+  final Set<String> ctorParamNames;
 
   List<FieldInfo> get allFields => [...inheritedFields, ...ownFields];
 }
@@ -384,27 +373,19 @@ class ClassInfo {
 // ── Supporting types ─────────────────────────────────────────────────────────
 
 class CompositeIndexInfo {
-  final List<String> fields;
-  final bool unique;
-  final List<String> order;
-
   const CompositeIndexInfo({
     required this.fields,
     this.unique = false,
     this.order = const [],
   });
+  final List<String> fields;
+  final bool unique;
+  final List<String> order;
 }
 
 enum RelationKind { belongsTo, hasOne, hasMany, manyToMany, embedded }
 
 class RelationInfo {
-  final String ownerName;
-  final String targetName;
-  final String fieldName;
-  final RelationKind kind;
-  final String? junctionTable;
-  final String? relationName;
-
   const RelationInfo({
     required this.ownerName,
     required this.targetName,
@@ -413,18 +394,23 @@ class RelationInfo {
     this.junctionTable,
     this.relationName,
   });
+  final String ownerName;
+  final String targetName;
+  final String fieldName;
+  final RelationKind kind;
+  final String? junctionTable;
+  final String? relationName;
 }
 
 class GeneratorFlags {
-  final bool zod;
-  final bool drift;
-  final bool drizzle;
-
   const GeneratorFlags({
     this.zod = true,
     this.drift = false,
     this.drizzle = false,
   });
+  final bool zod;
+  final bool drift;
+  final bool drizzle;
 
   GeneratorFlags copyWith({bool? zod, bool? drift, bool? drizzle}) =>
       GeneratorFlags(
@@ -435,36 +421,15 @@ class GeneratorFlags {
 }
 
 class SyncMeta {
+  const SyncMeta({this.syncable = false, this.conflictStrategy = 'latestWins'});
   final bool syncable;
   final String conflictStrategy;
-
-  const SyncMeta({this.syncable = false, this.conflictStrategy = 'latestWins'});
 }
 
 /// Lightweight type summary stored in the registry.
 /// Contains only what the cross-file graph and generators need —
 /// no field-level detail.
 class TypeInfo {
-  final String name;
-  final bool isEnum;
-  final List<String> enumValues;
-  final String sourceAssetPath;
-  final String? superclassName;
-  final Set<String> fieldDeps;
-  final Set<String> relationDeps;
-  final String? tableName;
-  final String? collectionName;
-  final int schemaVersion;
-  final String? namespace;
-  final bool enableTimestamps;
-  final bool enableSoftDelete;
-  final bool abstractSchema;
-  final bool cacheable;
-  final bool embeddable;
-  final GeneratorFlags generators;
-  final SyncMeta sync;
-  final bool manualImplementation;
-
   const TypeInfo({
     required this.name,
     required this.isEnum,
@@ -486,4 +451,23 @@ class TypeInfo {
     this.sync = const SyncMeta(),
     this.manualImplementation = false,
   });
+  final String name;
+  final bool isEnum;
+  final List<String> enumValues;
+  final String sourceAssetPath;
+  final String? superclassName;
+  final Set<String> fieldDeps;
+  final Set<String> relationDeps;
+  final String? tableName;
+  final String? collectionName;
+  final int schemaVersion;
+  final String? namespace;
+  final bool enableTimestamps;
+  final bool enableSoftDelete;
+  final bool abstractSchema;
+  final bool cacheable;
+  final bool embeddable;
+  final GeneratorFlags generators;
+  final SyncMeta sync;
+  final bool manualImplementation;
 }

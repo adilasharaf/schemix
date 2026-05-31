@@ -10,11 +10,10 @@ Builder schemixIndexBuilder(BuilderOptions options) =>
     _SchemixIndexBuilder(options);
 
 final class _SchemixIndexBuilder implements Builder {
+  const _SchemixIndexBuilder(this._options);
   final BuilderOptions _options;
 
-  const _SchemixIndexBuilder(this._options);
-
-  static final _log = SchemixLogger('index');
+  static final _log = const SchemixLogger('index');
 
   static const _barrelDir = 'gen';
   static const _barrelFile = 'schemix.g.ts';

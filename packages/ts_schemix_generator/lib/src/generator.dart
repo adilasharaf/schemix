@@ -16,7 +16,7 @@ import 'interface_generator.dart';
 /// This generator deliberately does **not** emit Zod schema `z.object({...})`
 /// blocks — that is the responsibility of `zod_schemix_generator`.
 final class TsGenerator implements SchemixGenerator {
-  static final _log = SchemixLogger('ts');
+  static final _log = const SchemixLogger('ts');
 
   @override
   String get id => 'ts';
@@ -88,7 +88,7 @@ String assembleFile(
   String assetPath,
   TypeGraph graph,
 ) {
-  final log = SchemixLogger('ts');
+  final log = const SchemixLogger('ts');
   log.buildStart(assetPath);
 
   final generator = TsGenerator();

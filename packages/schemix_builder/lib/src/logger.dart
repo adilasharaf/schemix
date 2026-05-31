@@ -1,9 +1,8 @@
 import 'package:build/build.dart';
 
 class SchemixLogger {
-  final String _scope;
-
   const SchemixLogger(this._scope);
+  final String _scope;
 
   void info(String msg) => log.info(_fmt(msg));
   void warning(String msg) => log.warning(_fmt(msg));

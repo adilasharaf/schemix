@@ -1,10 +1,9 @@
 import 'package:schemix/models.dart';
-import 'package:schemix_builder/src/logger.dart';
+import 'package:schemix_builder/schemix_builder.dart';
 
 final class CopyGenerator {
-  final SchemixLogger _log;
-
   const CopyGenerator(this._log);
+  final SchemixLogger _log;
 
   String generate(ClassInfo cls, {required Set<String> ctorParams}) {
     final name = cls.name;

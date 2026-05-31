@@ -5,7 +5,7 @@ description: >
   build_runner utilities used by Schemix generators.
 
 publish_to: none
-version: 1.0.27
+version: 1.0.0
 repository: https://github.com/adilasharaf/schemix
 
 environment:

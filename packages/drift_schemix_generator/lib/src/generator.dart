@@ -19,11 +19,6 @@ import 'utils.dart';
 /// - `ClassInfo.abstractSchema` is `false`
 /// - `ClassInfo.embeddable` is `false`
 final class DriftGenerator implements SchemixGenerator {
-  static final _log = SchemixLogger('drift');
-
-  final DriftTableBodyBuilder _bodyBuilder;
-  final DriftTableOverridesBuilder _overridesBuilder;
-
   /// Constructs the generator with a shared [DriftColumnBuilder] instance
   /// passed into both sub-builders so all column dispatch goes through one
   /// object (consistent skip logic, easy to swap in tests).
@@ -32,6 +27,10 @@ final class DriftGenerator implements SchemixGenerator {
   DriftGenerator._withColumnBuilder(DriftColumnBuilder columnBuilder)
     : _bodyBuilder = DriftTableBodyBuilder(columnBuilder),
       _overridesBuilder = DriftTableOverridesBuilder(columnBuilder);
+  static final _log = const SchemixLogger('drift');
+
+  final DriftTableBodyBuilder _bodyBuilder;
+  final DriftTableOverridesBuilder _overridesBuilder;
 
   // ── SchemixGenerator ────────────────────────────────────────────────────
 

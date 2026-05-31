@@ -1,14 +1,13 @@
 import 'package:schemix/models.dart';
-import 'package:schemix_builder/src/logger.dart';
+import 'package:schemix_builder/schemix_builder.dart';
 
 import 'column_builder.dart';
 
 /// Builds the body of a Drift `Table` subclass — i.e. all column getter
 /// declarations, including timestamp and soft-delete injections.
 final class DriftTableBodyBuilder {
-  final DriftColumnBuilder _columnBuilder;
-
   const DriftTableBodyBuilder(this._columnBuilder);
+  final DriftColumnBuilder _columnBuilder;
 
   /// Returns an ordered list of indented column declaration strings.
   ///

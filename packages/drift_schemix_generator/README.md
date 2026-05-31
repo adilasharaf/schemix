@@ -1,8 +1,6 @@
 # drift_schemix_generator
 
-A [Schemix](https://pub.dev/packages/schemix) generator that produces a Drift
-`Table` subclass for every `@Schemix`-annotated model class that has
-`generateDrift: true`.
+A [Schemix](https://github.com/adilasharaf/schemix) generator that produces a Drift `Table` subclass for every `@Schemix`-annotated model class that has `generateDrift: true`.
 
 ---
 
@@ -21,7 +19,7 @@ dev_dependencies:
 
 ---
 
-## Quick start
+## Quick Start
 
 ```dart
 import 'package:schemix/schemix.dart';
@@ -74,81 +72,115 @@ class UserTable extends Table {
 
 ## Configuration
 
-Override the default `models_package` option in your `build.yaml` if your model
-classes are exported from a differently-named package:
+Override the default `models_package` option in your `build.yaml` if your model classes are exported from a differently-named package:
 
 ```yaml
 # build.yaml (in your app package)
 targets:
   $default:
     builders:
-      drift_schemix_generator:
+      drift_schemix_generator|driftBuilder:
         options:
           models_package: "my_app_models"
 ```
 
----
-
-## What gets generated
-
-| Feature                                   | Trigger                                          |
-| ----------------------------------------- | ------------------------------------------------ |
-| Column declarations                       | Every eligible `FieldInfo`                       |
-| `TextColumn` FK                           | `@BelongsTo` relation field                      |
-| `IntColumn` + `EnumIndexConverter`        | `isEnum == true` on field                        |
-| `clientDefault(() => Uuid().v4())`        | `@PrimaryKey(autoGenerate: true)` on `String` PK |
-| `autoIncrement()`                         | `@AutoIncrement` on `int` PK                     |
-| Auto-injected `createdAt` / `updatedAt`   | `@Schemix(enableTimestamps: true)`               |
-| Auto-injected `deletedAt`                 | `@Schemix(enableSoftDelete: true)`               |
-| `Set<Column> get primaryKey`              | Multiple `@PrimaryKey` fields (composite PK)     |
-| `List<Set<Column>> get uniqueKeys`        | `@CompositeIndex(unique: true)`                  |
-| Deduplicated `EnumIndexConverter` getters | Shared enum type across multiple fields          |
+The `models_package` option controls the import in the generated file header. It defaults to `"models"`.
 
 ---
 
-## Fields that are skipped
+## What Gets Generated
 
-| Condition                              | Reason                                     |
-| -------------------------------------- | ------------------------------------------ |
-| `@IgnoreField`                         | Excluded from all outputs                  |
-| `@DriftIgnore`                         | Excluded from Drift only                   |
-| `@CloudOnly`                           | Local-DB column not needed                 |
-| `@HasMany` / `@HasOne` / `@ManyToMany` | No column emitted for non-owning relations |
-| `List<*>` / `Map<*,*>` fields          | No Drift type mapping                      |
+| Feature                                     | Trigger                                                                              |
+| ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `TextColumn`                                | `String` field                                                                       |
+| `IntColumn`                                 | `int` field (non-autoIncrement)                                                      |
+| `RealColumn`                                | `double` / `num` field                                                               |
+| `BoolColumn`                                | `bool` field                                                                         |
+| `DateTimeColumn`                            | `DateTime` field                                                                     |
+| `BlobColumn`                                | `Uint8List` field                                                                    |
+| `@DriftType` override                       | `@DriftType('text' / 'integer' / 'real' / 'boolean' / 'datetime' / 'blob')` on field |
+| `TextColumn` FK                             | `@BelongsTo` relation field (always text; UUIDs stored as text)                      |
+| `IntColumn` + `EnumIndexConverter`          | Enum field (`isEnum == true`)                                                        |
+| `.clientDefault(() => const Uuid().v4())`   | `@PrimaryKey(autoGenerate: true)` on a `String` field                                |
+| `.autoIncrement()`                          | `@AutoIncrement` on an `int` field                                                   |
+| `.nullable()`                               | Nullable field (`T?` in Dart)                                                        |
+| `.withDefault(currentDateAndTime)`          | `DateTime` field with `@DatabaseDefault`                                             |
+| Auto-injected `createdAt` / `updatedAt`     | `@Schemix(enableTimestamps: true)` (only if not declared)                            |
+| Auto-injected `deletedAt`                   | `@Schemix(enableSoftDelete: true)` (only if not declared)                            |
+| `Set<Column> get primaryKey`                | Multiple `@PrimaryKey` fields (composite PK only)                                    |
+| `List<Set<Column>> get uniqueKeys`          | `@CompositeIndex(unique: true)`                                                      |
+| Deduplicated `EnumIndexConverter` getters   | Shared enum type across multiple fields (one per type)                               |
+| `@UseRowClass(T, generateInsertable: true)` | Every generated table class                                                          |
+| `String get tableName`                      | Every generated table class                                                          |
 
 ---
 
-## Classes that are skipped
+## What Gets Skipped
+
+### Fields
+
+| Condition                              | Reason                                                      |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `@IgnoreField`                         | Excluded from all outputs                                   |
+| `@DriftIgnore`                         | Explicit Drift-only exclusion                               |
+| `@CloudOnly`                           | Local-DB column not needed                                  |
+| `@HasMany` / `@HasOne` / `@ManyToMany` | No column emitted for non-owning relations                  |
+| `List<*>` / `Map<*,*>` fields          | No Drift type mapping; column returns `null` and is omitted |
+
+### Classes
 
 | Condition                                                          |
 | ------------------------------------------------------------------ |
-| `isEnum == true`                                                   |
 | `generators.drift == false` (`generateDrift: false` in `@Schemix`) |
 | `abstractSchema == true`                                           |
 | `embeddable == true`                                               |
+| `isEnum == true`                                                   |
 
 ---
 
-## Package structure
+## Package Structure
 
 ```
 lib/
-├── drift_schemix_generator.dart   ← public barrel (DriftGenerator, driftBuilder)
+├── drift_schemix_generator.dart     ← public barrel (DriftGenerator, driftBuilder)
+├── builder.dart                     ← builder factory; registers DriftGenerator, returns schemixFileBuilder
 └── src/
-    ├── builder.dart               ← registers DriftGenerator, returns schemixFileBuilder
-    ├── generator.dart             ← DriftGenerator implements SchemixGenerator
-    ├── header.dart                ← file header / import assembly
-    ├── column_builder.dart        ← per-field column declaration builder
-    ├── table_body_builder.dart    ← column list + lifecycle injection
-    ├── table_overrides_builder.dart ← tableName / primaryKey / uniqueKeys / enum converters
-    ├── type_resolver.dart         ← Dart type → Drift column type mapping
-    └── utils.dart                 ← snakeCase + converterName string extensions
+    ├── generator.dart               ← DriftGenerator implements SchemixGenerator; generateFile() helper
+    ├── header.dart                  ← DriftHeader: file-level comment + import lines
+    ├── column_builder.dart          ← DriftColumnBuilder: FieldInfo → column declaration string
+    ├── table_body_builder.dart      ← DriftTableBodyBuilder: column list + lifecycle injection
+    ├── table_overrides_builder.dart ← DriftTableOverridesBuilder: tableName / primaryKey / uniqueKeys / enum converters
+    ├── type_resolver.dart           ← DriftTypeResolver: Dart type → Drift column type + builder expression
+    └── utils.dart                   ← snakeCase / converterName string extensions
 ```
+
+The public API exports only `DriftGenerator` and `driftBuilder`. Everything under `src/` is internal.
 
 ---
 
-## Rules this package must never break
+## How It Fits Into the Build Pipeline
+
+```
+Phase 1 — schemix_builder|schemix_scan
+  Reads lib/**.dart, writes lib/schemix_registry.json
+
+Phase 2 — schemix_builder|schemix_file
+  Dispatches to DriftGenerator (id='drift') once per class
+  Writes lib/{name}.table.dart as a standalone Dart file
+```
+
+`DriftGenerator` never reads `schemix_registry.json` directly. The resolved `TypeGraph` is provided through `GeneratorContext` by `schemix_builder`. The `models_package` option is read from `GeneratorContext.options.config`.
+
+Unlike `zod_schemix_generator`, this generator has no ordering constraint — Drift table classes are independent — so generation is performed per-class with no buffering.
+
+---
+
+## Rules This Package Must Never Break
 
 - Does not depend on any other Schemix generator package.
 - Does not depend on `schemix_builder` at runtime — only in `dev_dependencies`.
 - Does not import private `src/` paths from `schemix` or `schemix_builder`.
+- `DriftColumnBuilder.skipField` is the single authoritative skip-gate for field-level exclusion; `DriftTableBodyBuilder` and `DriftTableOverridesBuilder` must delegate to it and must not contain their own exclusion logic.
+- Timestamp and soft-delete columns must only be auto-injected when the class does not already declare `@CreatedAt` / `@UpdatedAt` / `@DeletedAt` fields — re-injection would produce duplicate column names.
+- `EnumIndexConverter` getters must be deduplicated per enum type — two fields of the same enum must not produce two converters.
+- Composite `primaryKey` override must only be emitted when there are two or more `@PrimaryKey` fields; single-column PKs use `autoIncrement()` or `clientDefault` on the column itself.

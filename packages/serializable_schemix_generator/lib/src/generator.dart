@@ -1,6 +1,5 @@
-import 'package:schemix/models.dart';
-import 'package:schemix/src/generator_api.dart';
-import 'package:schemix_builder/src/logger.dart';
+import 'package:schemix/schemix.dart';
+import 'package:schemix_builder/schemix_builder.dart';
 
 import 'copy.dart';
 import 'ctor_params.dart';
@@ -10,7 +9,7 @@ import 'header.dart';
 import 'to_json.dart';
 
 final class SerializableGenerator implements SchemixGenerator {
-  static final _log = SchemixLogger('serializable');
+  static final _log = const SchemixLogger('serializable');
 
   @override
   String get id => 'serializable';
@@ -55,7 +54,7 @@ String assembleFile(
   String assetPath,
   GeneratorContext context,
 ) {
-  final log = SchemixLogger('serializable');
+  final log = const SchemixLogger('serializable');
   log.buildStart(assetPath);
 
   final generator = SerializableGenerator();

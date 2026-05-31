@@ -18,6 +18,22 @@
 /// class User { ... }
 /// ```
 class Schemix {
+  const Schemix({
+    this.tableName,
+    this.collectionName,
+    this.schemaVersion = 1,
+    this.namespace,
+    this.enableTimestamps = true,
+    this.enableSoftDelete = true,
+    this.abstractSchema = false,
+    this.cacheable = true,
+    this.syncable = true,
+    this.embeddable = false,
+    this.generateZod = true,
+    this.generateDrift = true,
+    this.generateDrizzle = true,
+  });
+
   /// SQL / Drift / Drizzle table name. Defaults to snake_case of class name.
   final String? tableName;
 
@@ -58,31 +74,16 @@ class Schemix {
 
   /// Emit a Drizzle ORM table schema (`gen/{path}.drizzle.ts`).
   final bool generateDrizzle;
-
-  const Schemix({
-    this.tableName,
-    this.collectionName,
-    this.schemaVersion = 1,
-    this.namespace,
-    this.enableTimestamps = true,
-    this.enableSoftDelete = true,
-    this.abstractSchema = false,
-    this.cacheable = true,
-    this.syncable = true,
-    this.embeddable = false,
-    this.generateZod = true,
-    this.generateDrift = true,
-    this.generateDrizzle = true,
-  });
 }
 
 /// Groups a schema into a logical domain.
 ///
 /// Example: `@SchemaGroup('billing')`
 class SchemaGroup {
+  const SchemaGroup(this.group);
+
   /// The domain or module name (e.g. 'auth', 'billing').
   final String group;
-  const SchemaGroup(this.group);
 }
 
 /// Attaches human-readable documentation to a schema class.
@@ -90,9 +91,10 @@ class SchemaGroup {
 ///
 /// Example: `@SchemaDescription('Represents a registered business entity.')`
 class SchemaDescription {
+  const SchemaDescription(this.description);
+
   /// Documentation text that appears in generated output.
   final String description;
-  const SchemaDescription(this.description);
 }
 
 /// Marks an entire schema class as deprecated.
@@ -103,6 +105,12 @@ class SchemaDescription {
 /// class Business { ... }
 /// ```
 class DeprecatedSchema {
+  const DeprecatedSchema({
+    required this.reason,
+    this.replacement,
+    this.removalVersion,
+  });
+
   /// Human-readable reason for the deprecation.
   final String reason;
 
@@ -111,12 +119,6 @@ class DeprecatedSchema {
 
   /// Semver string of the version in which this schema will be removed.
   final String? removalVersion;
-
-  const DeprecatedSchema({
-    required this.reason,
-    this.replacement,
-    this.removalVersion,
-  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -128,6 +130,26 @@ class DeprecatedSchema {
 ///
 /// Also available as the typedef `@AppField`.
 class SchemixField {
+  const SchemixField({
+    this.immutable = false,
+    this.readonly = false,
+    this.hidden = false,
+    this.internal = false,
+    this.searchable = false,
+    this.sortable = false,
+    this.filterable = false,
+    this.computed = false,
+    this.transient = false,
+    this.virtual = false,
+    this.generated = false,
+    this.unique = false,
+    this.sensitive = false,
+    this.displayName,
+    this.description,
+    this.example,
+    this.placeholder,
+  });
+
   /// Field cannot be changed after creation.
   final bool immutable;
 
@@ -178,26 +200,6 @@ class SchemixField {
 
   /// Placeholder text for form inputs.
   final String? placeholder;
-
-  const SchemixField({
-    this.immutable = false,
-    this.readonly = false,
-    this.hidden = false,
-    this.internal = false,
-    this.searchable = false,
-    this.sortable = false,
-    this.filterable = false,
-    this.computed = false,
-    this.transient = false,
-    this.virtual = false,
-    this.generated = false,
-    this.unique = false,
-    this.sensitive = false,
-    this.displayName,
-    this.description,
-    this.example,
-    this.placeholder,
-  });
 }
 
 /// Alias for [@SchemixField].
@@ -207,6 +209,12 @@ typedef AppField = SchemixField;
 ///
 /// Example: `@PrimaryKey(autoGenerate: true)`
 class PrimaryKey {
+  const PrimaryKey({
+    this.autoGenerate = true,
+    this.compositeOrder,
+    this.clustered = false,
+  });
+
   /// When true, the database or ORM generates the value automatically
   /// (UUID for String PKs, SERIAL for int PKs).
   final bool autoGenerate;
@@ -216,12 +224,6 @@ class PrimaryKey {
 
   /// Whether this PK column is the clustered index (SQL Server / MySQL).
   final bool clustered;
-
-  const PrimaryKey({
-    this.autoGenerate = true,
-    this.compositeOrder,
-    this.clustered = false,
-  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -232,6 +234,14 @@ class PrimaryKey {
 ///
 /// Example: `@Indexed(unique: true)`
 class Indexed {
+  const Indexed({
+    this.name,
+    this.unique = false,
+    this.descending = false,
+    this.fullText = false,
+    this.spatial = false,
+  });
+
   /// Optional explicit index name. Defaults to a generated name.
   final String? name;
 
@@ -246,20 +256,18 @@ class Indexed {
 
   /// Index supports spatial / GIS queries.
   final bool spatial;
-
-  const Indexed({
-    this.name,
-    this.unique = false,
-    this.descending = false,
-    this.fullText = false,
-    this.spatial = false,
-  });
 }
 
 /// Creates a multi-field composite index. Applied at class level.
 ///
 /// Example: `@CompositeIndex(fields: ['email', 'tenantId'], unique: true)`
 class CompositeIndex {
+  const CompositeIndex({
+    required this.fields,
+    this.unique = false,
+    this.order = const [],
+  });
+
   /// Ordered list of field names that form the composite index.
   final List<String> fields;
 
@@ -268,12 +276,6 @@ class CompositeIndex {
 
   /// Per-field sort directions; must match [fields] length if provided.
   final List<String> order;
-
-  const CompositeIndex({
-    required this.fields,
-    this.unique = false,
-    this.order = const [],
-  });
 }
 
 /// Shorthand uniqueness constraint. Equivalent to `@Indexed(unique: true)`.
@@ -290,54 +292,60 @@ class AutoIncrement {
 ///
 /// Example: `@DatabaseGenerated(strategy: 'uuid')`
 class DatabaseGenerated {
+  const DatabaseGenerated({this.strategy});
+
   /// Generation strategy, e.g. `'uuid'`, `'sequence'`, `'expression'`.
   final String? strategy;
-  const DatabaseGenerated({this.strategy});
 }
 
 /// Overrides the raw SQL column type for this field.
 ///
 /// Example: `@SqlType('JSONB')`
 class SqlType {
+  const SqlType(this.type);
+
   /// Raw SQL type string, e.g. `'JSONB'`, `'TEXT[]'`, `'TIMESTAMPTZ'`.
   final String type;
-  const SqlType(this.type);
 }
 
 /// Overrides the Drizzle ORM column type for this field.
 ///
 /// Example: `@DrizzleType('jsonb')`
 class DrizzleType {
+  const DrizzleType(this.type);
+
   /// Drizzle column function name, e.g. `'jsonb'`, `'text'`, `'timestamp'`.
   final String type;
-  const DrizzleType(this.type);
 }
 
 /// Overrides the Drift column type for this field.
 ///
 /// Example: `@DriftType('text')`
 class DriftType {
+  const DriftType(this.type);
+
   /// Drift column builder type string, e.g. `'text'`, `'integer'`.
   final String type;
-  const DriftType(this.type);
 }
 
 /// Sets a database-level default value for this field.
 ///
 /// Example: `@DatabaseDefault(UserStatus.active)`
 class DatabaseDefault {
+  const DatabaseDefault(this.value);
+
   /// The default value; may be a Dart enum constant, primitive, or string.
   final dynamic value;
-  const DatabaseDefault(this.value);
 }
 
 /// Adds a SQL CHECK constraint to this field's column.
 ///
 /// Example: `@CheckConstraint('count >= 0')`
 class CheckConstraint {
+  const CheckConstraint(this.expression);
+
   /// SQL expression that must evaluate to true for every row.
   final String expression;
-  const CheckConstraint(this.expression);
 }
 
 /// Marks a field as a secondary (alternate) key for lookups.
@@ -354,9 +362,10 @@ class PartitionKey {
 ///
 /// Example: `@SortKey(descending: true)`
 class SortKey {
+  const SortKey({this.descending = false});
+
   /// When true, results are sorted in descending order by default.
   final bool descending;
-  const SortKey({this.descending = false});
 }
 
 /// Marks a field for inclusion in a full-text search index.
@@ -377,13 +386,13 @@ class CachedField {
 ///
 /// Example: `@BelongsTo(User)`
 class BelongsTo {
+  const BelongsTo(this.target, {this.foreignKey});
+
   /// The target model type.
   final Type target;
 
   /// Explicit foreign-key column name. Defaults to `{targetName}Id`.
   final String? foreignKey;
-
-  const BelongsTo(this.target, {this.foreignKey});
 }
 
 /// One-to-one relation. No column is emitted; resolved via a foreign key on
@@ -391,13 +400,13 @@ class BelongsTo {
 ///
 /// Example: `@HasOne(Profile)`
 class HasOne {
+  const HasOne(this.target, {this.foreignKey});
+
   /// The target model type.
   final Type target;
 
   /// Explicit foreign-key column name on the target model.
   final String? foreignKey;
-
-  const HasOne(this.target, {this.foreignKey});
 }
 
 /// One-to-many relation. No column is emitted; resolved via a foreign key on
@@ -405,19 +414,21 @@ class HasOne {
 ///
 /// Example: `@HasMany(Invoice)`
 class HasMany {
+  const HasMany(this.target, {this.foreignKey});
+
   /// The target model type.
   final Type target;
 
   /// Explicit foreign-key column name on the target model.
   final String? foreignKey;
-
-  const HasMany(this.target, {this.foreignKey});
 }
 
 /// Many-to-many relation via a junction table. No column is emitted.
 ///
 /// Example: `@ManyToMany(Tag, junctionTable: 'business_tags')`
 class ManyToMany {
+  const ManyToMany(this.target, {this.junctionTable, this.relationName});
+
   /// The target model type.
   final Type target;
 
@@ -426,8 +437,6 @@ class ManyToMany {
 
   /// Optional explicit relation name used in generated code.
   final String? relationName;
-
-  const ManyToMany(this.target, {this.junctionTable, this.relationName});
 }
 
 /// Embeds the target class fields inline into this model's table (no join).
@@ -441,9 +450,10 @@ class Embedded {
 ///
 /// [fieldName] is the name of the owning relation field on this class.
 class RelationField {
+  const RelationField({this.fieldName});
+
   /// Name of the owning relation field (e.g. `'user'` for `userId`).
   final String? fieldName;
-  const RelationField({this.fieldName});
 }
 
 /// Marks a relation so that deleting the owner also deletes related rows.
@@ -470,31 +480,33 @@ class Required {
 ///
 /// Example: `@Min(0)`
 class Min {
+  const Min(this.value);
+
   /// The minimum allowed value.
   final num value;
-  const Min(this.value);
 }
 
 /// Numeric maximum value (inclusive). Emits `.lte(value)` in Zod.
 ///
 /// Example: `@Max(1000000)`
 class Max {
+  const Max(this.value);
+
   /// The maximum allowed value.
   final num value;
-  const Max(this.value);
 }
 
 /// String length constraint. Emits `.min(min).max(max)` in Zod.
 ///
 /// Example: `@Length(min: 3, max: 150)`
 class Length {
+  const Length({this.min, this.max});
+
   /// Minimum character count (inclusive).
   final int? min;
 
   /// Maximum character count (inclusive).
   final int? max;
-
-  const Length({this.min, this.max});
 }
 
 /// Validates the field value against a regular expression.
@@ -502,9 +514,10 @@ class Length {
 ///
 /// Example: `@Regex(r'^[A-Z]{2}\d{6}$')`
 class Regex {
+  const Regex(this.pattern);
+
   /// The Dart regex pattern string.
   final String pattern;
-  const Regex(this.pattern);
 }
 
 /// Validates the field as an email address. Emits `.email()` in Zod.
@@ -537,9 +550,10 @@ class Uuid {
 ///
 /// Example: `@EnumFallback(BusinessType.other)`
 class EnumFallback {
+  const EnumFallback(this.value);
+
   /// The fallback enum value.
   final dynamic value;
-  const EnumFallback(this.value);
 }
 
 /// Restricts the field to a fixed set of allowed values.
@@ -547,9 +561,10 @@ class EnumFallback {
 ///
 /// Example: `@AllowedValues(['retail', 'wholesale'])`
 class AllowedValues {
+  const AllowedValues(this.values);
+
   /// The list of permitted values.
   final List<dynamic> values;
-  const AllowedValues(this.values);
 }
 
 /// Rejects a fixed set of disallowed values.
@@ -557,9 +572,10 @@ class AllowedValues {
 ///
 /// Example: `@DisallowValues(['admin', 'root'])`
 class DisallowValues {
+  const DisallowValues(this.values);
+
   /// The list of forbidden values.
   final List<dynamic> values;
-  const DisallowValues(this.values);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -571,9 +587,10 @@ class DisallowValues {
 ///
 /// Example: `@JsonField('business_name')`
 class JsonField {
+  const JsonField(this.name);
+
   /// The JSON key to use in serialized output.
   final String name;
-  const JsonField(this.name);
 }
 
 /// Excludes this field from all serialization and code generation outputs.
@@ -601,31 +618,33 @@ class Flatten {
 ///
 /// Example: `@DateFormat('yyyy-MM-dd')`
 class DateFormat {
+  const DateFormat(this.format);
+
   /// The date format pattern (e.g. `'yyyy-MM-dd'`, `'ISO8601'`).
   final String format;
-  const DateFormat(this.format);
 }
 
 /// Specifies decimal precision and scale for numeric fields.
 ///
 /// Example: `@Precision(precision: 18, scale: 2)`
 class Precision {
+  const Precision({required this.precision, this.scale});
+
   /// Total number of significant digits.
   final int precision;
 
   /// Number of digits after the decimal point.
   final int? scale;
-
-  const Precision({required this.precision, this.scale});
 }
 
 /// Instructs serialization to write the value as a different type.
 ///
 /// Example: `@SerializeAs('string')`
 class SerializeAs {
+  const SerializeAs(this.type);
+
   /// The target serialization type name.
   final String type;
-  const SerializeAs(this.type);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -643,22 +662,23 @@ class SerializeAs {
 /// String userId;
 /// ```
 class TsType {
+  const TsType(this.typeName, {this.zodSchema});
+
   /// The TypeScript type expression, e.g. `'string | number'`.
   final String typeName;
 
   /// Optional Zod schema expression to use instead of the default resolver.
   final String? zodSchema;
-
-  const TsType(this.typeName, {this.zodSchema});
 }
 
 /// Overrides the Zod schema expression for this field directly.
 ///
 /// Example: `@ZodType("z.string().brand('UserId')")`
 class ZodType {
+  const ZodType(this.schema);
+
   /// The full Zod schema expression string.
   final String schema;
-  const ZodType(this.schema);
 }
 
 /// Unified type override that spans multiple generation targets.
@@ -674,6 +694,13 @@ class ZodType {
 /// Map<String, dynamic>? metadata;
 /// ```
 class CustomConverter {
+  const CustomConverter({
+    this.dartConverter,
+    this.tsConverter,
+    this.sqlType,
+    this.drizzleType,
+  });
+
   /// Dart converter class name (read by ModelAnalyzer via reflection).
   final String? dartConverter;
 
@@ -685,13 +712,6 @@ class CustomConverter {
 
   /// Drizzle column function name override (e.g. `'jsonb'`).
   final String? drizzleType;
-
-  const CustomConverter({
-    this.dartConverter,
-    this.tsConverter,
-    this.sqlType,
-    this.drizzleType,
-  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -744,27 +764,30 @@ class MaskInLogs {
 ///
 /// Example: `@PermissionRequired('admin')`
 class PermissionRequired {
+  const PermissionRequired(this.permission);
+
   /// The permission string required to read this field.
   final String permission;
-  const PermissionRequired(this.permission);
 }
 
 /// Restricts read access to callers with one of the listed scopes.
 ///
 /// Example: `@ReadScope(['admin', 'owner'])`
 class ReadScope {
+  const ReadScope(this.scopes);
+
   /// List of scope strings that are permitted to read this field.
   final List<String> scopes;
-  const ReadScope(this.scopes);
 }
 
 /// Restricts write access to callers with one of the listed scopes.
 ///
 /// Example: `@WriteScope(['owner'])`
 class WriteScope {
+  const WriteScope(this.scopes);
+
   /// List of scope strings that are permitted to write this field.
   final List<String> scopes;
-  const WriteScope(this.scopes);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -779,6 +802,15 @@ class WriteScope {
 /// String businessName;
 /// ```
 class UiField {
+  const UiField({
+    this.label,
+    this.icon,
+    this.section,
+    this.order,
+    this.helpText,
+    this.tooltip,
+  });
+
   /// Human-readable field label shown in forms and tables.
   final String? label;
 
@@ -796,15 +828,6 @@ class UiField {
 
   /// Tooltip text shown on hover.
   final String? tooltip;
-
-  const UiField({
-    this.label,
-    this.icon,
-    this.section,
-    this.order,
-    this.helpText,
-    this.tooltip,
-  });
 }
 
 /// Form widget metadata. Controls input type and behaviour.
@@ -814,6 +837,13 @@ class UiField {
 ///   `@Encrypted`/`@Hashed` → 'password' · `@Email` → 'email' · `@Url` → 'url'
 ///   bool → 'boolean' · int/double → 'number' · DateTime → 'date' · else → 'text'
 class FormField {
+  const FormField({
+    this.widgetType,
+    this.autofocus = false,
+    this.multiline = false,
+    this.hidden = false,
+  });
+
   /// Explicit widget type override (e.g. `'text'`, `'select'`, `'textarea'`).
   final String? widgetType;
 
@@ -825,17 +855,12 @@ class FormField {
 
   /// Hides this field from the generated form (still present in the type).
   final bool hidden;
-
-  const FormField({
-    this.widgetType,
-    this.autofocus = false,
-    this.multiline = false,
-    this.hidden = false,
-  });
 }
 
 /// Column metadata for generated data-table UIs.
 class TableColumn {
+  const TableColumn({this.width, this.align, this.sortable = true});
+
   /// Column width in pixels.
   final int? width;
 
@@ -844,8 +869,6 @@ class TableColumn {
 
   /// Whether the column header is clickable to sort rows.
   final bool sortable;
-
-  const TableColumn({this.width, this.align, this.sortable = true});
 }
 
 /// Marks a string field as a colour value (e.g. hex `#RRGGBB`).
@@ -919,9 +942,10 @@ class AuditField {
 ///
 /// Example: `@ConflictResolver(strategy: 'latestWins')`
 class ConflictResolver {
+  const ConflictResolver({required this.strategy});
+
   /// Conflict resolution strategy: `'latestWins'`, `'firstWins'`, `'merge'`.
   final String strategy;
-  const ConflictResolver({required this.strategy});
 }
 
 /// Field exists only in the local database — never synced to the server.
@@ -940,9 +964,10 @@ class CloudOnly {
 ///
 /// Example: `@SyncPriority(priority: 10)`
 class SyncPriority {
+  const SyncPriority({required this.priority});
+
   /// Higher values are synced first.
   final int priority;
-  const SyncPriority({required this.priority});
 }
 
 /// Marks a field so that every mutation is recorded as an operation log entry.
@@ -958,6 +983,12 @@ class OperationTracked {
 ///
 /// Example: `@ApiField(expose: true, readonly: true)`
 class ApiField {
+  const ApiField({
+    this.expose = true,
+    this.readonly = false,
+    this.deprecated = false,
+  });
+
   /// When false, the field is excluded from all DTO interfaces.
   final bool expose;
 
@@ -966,18 +997,14 @@ class ApiField {
 
   /// Marks this field as deprecated in generated API documentation.
   final bool deprecated;
-
-  const ApiField({
-    this.expose = true,
-    this.readonly = false,
-    this.deprecated = false,
-  });
 }
 
 /// Tracks the API version lifecycle of a field.
 ///
 /// Example: `@ApiVersion(introducedIn: '1.2.0', deprecatedIn: '2.0.0')`
 class ApiVersion {
+  const ApiVersion({this.introducedIn, this.deprecatedIn, this.removedIn});
+
   /// Semver string of the API version that introduced this field.
   final String? introducedIn;
 
@@ -986,8 +1013,6 @@ class ApiVersion {
 
   /// Semver string of the API version that removed this field.
   final String? removedIn;
-
-  const ApiVersion({this.introducedIn, this.deprecatedIn, this.removedIn});
 }
 
 /// Field is included in DTO interfaces only — not persisted to the database.
@@ -1013,10 +1038,11 @@ class TrackChanges {
 ///
 /// Example: `@TrackAnalytics(eventName: 'plan_changed')`
 class TrackAnalytics {
+  const TrackAnalytics({this.eventName});
+
   /// Optional override for the analytics event name.
   /// Defaults to a generated name based on the class and field name.
   final String? eventName;
-  const TrackAnalytics({this.eventName});
 }
 
 /// Logs every write to this field using the application's logging system.
@@ -1033,9 +1059,10 @@ class LogChanges {
 ///
 /// Example: `@RenamedFrom('company_name')`
 class RenamedFrom {
+  const RenamedFrom(this.oldName);
+
   /// The previous field / column name.
   final String oldName;
-  const RenamedFrom(this.oldName);
 }
 
 /// Marks a field as scheduled for removal in [version].
@@ -1043,18 +1070,20 @@ class RenamedFrom {
 ///
 /// Example: `@RemovedIn('3.0.0')`
 class RemovedIn {
+  const RemovedIn(this.version);
+
   /// Semver string of the version in which this field will be removed.
   final String version;
-  const RemovedIn(this.version);
 }
 
 /// Attaches a free-form migration note to a field for documentation purposes.
 ///
 /// Example: `@MigrationNote('Backfill from the legacy profile table.')`
 class MigrationNote {
+  const MigrationNote(this.note);
+
   /// The migration note text.
   final String note;
-  const MigrationNote(this.note);
 }
 
 /// Marks a field as a legacy carry-over that exists only for backwards
@@ -1071,9 +1100,10 @@ class LegacyField {
 ///
 /// Example: `@FeatureFlag('new_billing_flow')`
 class FeatureFlag {
+  const FeatureFlag(this.flag);
+
   /// The feature-flag identifier checked at runtime.
   final String flag;
-  const FeatureFlag(this.flag);
 }
 
 /// Marks a field as experimental. Generated code includes a warning comment.
@@ -1099,13 +1129,13 @@ class EnterpriseOnly {
 /// String slug;
 /// ```
 class SlugField {
+  const SlugField({this.sourceField, this.separator = '-'});
+
   /// The field name whose value is used to generate the slug.
   final String? sourceField;
 
   /// Character used to join slug words (default: `'-'`).
   final String separator;
-
-  const SlugField({this.sourceField, this.separator = '-'});
 }
 
 // ════════════════════════════════════════════════════════════════════════════

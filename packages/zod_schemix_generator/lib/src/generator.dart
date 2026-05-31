@@ -114,7 +114,7 @@ final class ZodGenerator implements SchemixGenerator {
     String assetPath,
     TypeGraph graph,
   ) {
-    final graphResolver = ZodGraphResolver();
+    final graphResolver = const ZodGraphResolver();
     final schemaGen = ZodSchemaGenerator(
       graph,
       dateTimeAsString: _dateTimeAsString,
