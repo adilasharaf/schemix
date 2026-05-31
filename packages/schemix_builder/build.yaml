@@ -1,0 +1,38 @@
+builders:
+  schemix_scan:
+    target: ":schemix_builder"
+    import: "package:schemix_builder/builder.dart"
+    builder_factories: ["schemixScanBuilder"]
+    build_extensions:
+      "$package$":
+        - "lib/schemix_registry.json"
+    auto_apply: dependents
+    build_to: cache
+    runs_before:
+      - "schemix_builder|schemix_file"
+
+  schemix_file:
+    target: ":schemix_builder"
+    import: "package:schemix_builder/builder.dart"
+    builder_factories: ["schemixFileBuilder"]
+    build_extensions:
+      "^lib/{{}}.dart":
+        - "lib/{{}}.schemix.dart"
+        - "lib/{{}}.table.dart"
+        - "gen/{{}}.g.ts"
+        - "gen/{{}}.drizzle.ts"
+    auto_apply: dependents
+    build_to: source
+    required_inputs:
+      - "lib/schemix_registry.json"
+
+  schemix_index:
+    target: ":schemix_builder"
+    import: "package:schemix_builder/builder.dart"
+    builder_factories: ["schemixIndexBuilder"]
+    build_extensions:
+      "$package$":
+        - "gen/schemix.g.ts"
+    auto_apply: dependents
+    build_to: source
+    runs_before: []

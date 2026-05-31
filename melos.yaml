@@ -1,0 +1,17 @@
+# ============================================================
+# Melos Workspace Configuration for schemix monorepo
+# Docs: https://melos.invertase.dev/configuration/overview
+# ============================================================
+
+name: schemix
+repository: https://github.com/adilasharaf/schemix
+
+# ──────────────────────────────────────────────
+# Package Discovery
+# ──────────────────────────────────────────────
+packages:
+  - packages/schemix
+  - packages/schemix_builder
+  - packages/serializable_schemix_generator
+  - packages/drift_schemix_generator
+  - packages/drizzle_schemix_generator

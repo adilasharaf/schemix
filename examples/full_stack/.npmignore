@@ -1,0 +1,42 @@
+# ── Dart / pub artefacts ─────────────────────────────────────────────────────
+# npm / git consumers only need the compiled JS (dist/) or the TS sources
+# (gen/). Everything Dart-specific is excluded.
+
+# Dart source
+lib/
+test/
+example/
+
+# Dart tooling
+pubspec.yaml
+pubspec.lock
+build.yaml
+analysis_options.yaml
+.dart_tool/
+.packages
+
+# Dart generated files that may appear at root
+**/*.g.dart
+**/*.freezed.dart
+
+# ── Dev / CI noise ────────────────────────────────────────────────────────────
+.github/
+.vscode/
+.idea/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+codebase_summary.txt
+code_summary
+README_DART.md
+
+# ── Keep these (do NOT add to .npmignore) ────────────────────────────────────
+# gen/          → TypeScript source files (tsc input)
+# dist/         → compiled JS + .d.ts (tsc output, the actual package entry)
+# package.json
+# tsconfig.json
+# README.md
+# LICENSE

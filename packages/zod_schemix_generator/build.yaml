@@ -1,0 +1,27 @@
+# build.yaml — zod_schemix_generator
+#
+# This file declares the builder that registers the Zod generator with the
+# schemix_builder infrastructure. The actual file writing is performed by
+# schemix_build's SchemixFileBuilder; this package only plugs in the generator.
+#
+# Usage in a consuming package's pubspec.yaml:
+#   dev_dependencies:
+#     zod_schemix_generator: any
+#
+# No build.yaml override is needed in the consuming package unless you want to
+# pass options (e.g. dateTimeAsString: false).
+
+builders:
+  zodBuilder:
+    import: "package:zod_schemix_generator/zod_schemix_generator.dart"
+    builder_factories: ["zodBuilder"]
+    build_extensions:
+      # This builder produces no files directly — it only registers the generator.
+      # The actual .g.ts files are written by schemix_build's SchemixFileBuilder.
+      "lib/$lib$": []
+    auto_apply: dependents
+    build_to: cache
+    required_inputs:
+      - "lib/schemix_registry.json"
+    runs_before:
+      - "schemix_build|schemixFileBuilder"

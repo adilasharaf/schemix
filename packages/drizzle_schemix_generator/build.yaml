@@ -1,0 +1,13 @@
+builders:
+  drizzle_schemix_generator:
+    import: "package:drizzle_schemix_generator/builder.dart"
+    builder_factories: ["drizzleSchemixBuilder"]
+    build_extensions:
+      "^lib/{{}}.dart":
+        - "gen/{{}}.drizzle.ts"
+    auto_apply: dependents
+    build_to: source
+    required_inputs:
+      - "lib/schemix_registry.json"
+    runs_before:
+      - "schemix_builder|schemix_index_builder"

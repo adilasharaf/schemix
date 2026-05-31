@@ -1,0 +1,40 @@
+name: zod_schemix_generator
+description: >
+  Zod schema and TypeScript interface generator for the Schemix ecosystem.
+  Generates Zod schemas, TypeScript interfaces, and type exports from
+  Schemix-annotated classes with generateZod: true.
+
+publish_to: none
+version: 0.1.0
+repository: https://github.com/adilasharaf/schemix
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  # Core Schemix contracts, annotations, and metadata models
+  schemix: any
+
+  # Builder APIs and build system integration
+  build: ^4.0.6
+
+  # Build infrastructure — needed to access CrossFileRegistry, source_parser,
+  # and other schemix_builder internals during testing only.
+  # Must never appear in dependencies: generators must not depend on schemix_build
+  # at runtime. See: https://github.com/adilasharaf/schemix/README.md#package-map
+  schemix_builder: any
+
+dev_dependencies:
+  # Execute builders during development
+  build_runner: ^2.15.0
+
+  # Test builders and generated outputs
+  build_test: ^3.5.15
+
+  # Unit testing
+  test: ^1.30.0
+
+  # Dart lints
+  lints: ^6.1.0

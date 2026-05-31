@@ -1,0 +1,46 @@
+name: schemix_builder
+description: >
+  Internal build infrastructure for the Schemix ecosystem. Provides analyzer
+  integration, metadata extraction, validation, registry management, and
+  build_runner utilities used by Schemix generators.
+
+publish_to: none
+version: 1.0.27
+repository: https://github.com/adilasharaf/schemix
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  # Core Schemix contracts, annotations, and metadata models
+  schemix: any
+
+  # Dart static analysis (AST, elements, types, annotations)
+  analyzer: ^9.0.0
+
+  # Builder APIs and build system integration
+  build: ^4.0.6
+
+  # Source generation utilities (LibraryReader, TypeChecker, etc.)
+  source_gen: ^4.2.3
+
+  # File-system asset discovery and matching
+  glob: ^2.1.3
+
+  # Path utilities for asset and import resolution
+  path: ^1.9.1
+
+dev_dependencies:
+  # Execute builders during development
+  build_runner: ^2.15.0
+
+  # Test builders and generated outputs
+  build_test: ^3.5.15
+
+  # Recommended Dart lints
+  lints: ^6.1.0
+
+  # Unit and integration testing
+  test: ^1.30.0

@@ -1,0 +1,146 @@
+name: schemix_workspace
+description: >
+  Model-definition and code-generation platform built on top of build_runner.
+  Define a schema once and generate artifacts for multiple targets from a
+  single source of truth.
+
+repository: https://github.com/adilasharaf/schemix
+publish_to: none
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+workspace:
+  # Core
+  - packages/schemix
+  - packages/schemix_builder
+
+  # Generators
+  - packages/serializable_schemix_generator
+  - packages/drift_schemix_generator
+  - packages/drizzle_schemix_generator
+  - packages/zod_schemix_generator
+  - packages/ts_schemix_generator
+
+  # Future generators
+  # - packages/openapi_schemix_generator
+  # - packages/graphql_schemix_generator
+  # - packages/prisma_schemix_generator
+  # - packages/kotlin_schemix_generator
+  # - packages/swift_schemix_generator
+
+  # Examples
+  # - examples/basic
+  # - examples/full_stack
+
+  # Internal tools
+  # - tools/schemix_cli
+
+dev_dependencies:
+  melos: ^7.5.1
+
+melos:
+  repository: https://github.com/adilasharaf/schemix
+  resolution: workspace
+
+  ide:
+    vscode: true
+
+  command:
+    bootstrap:
+      usePubspecOverrides: true
+      enforceLockfile: true
+
+    version:
+      linkToCommits: true
+      workspaceChangelog: true
+
+  scripts:
+    get:
+      description: Install dependencies for workspace
+      run: dart pub get
+
+    analyze:
+      description: Analyze all packages
+      run: dart analyze .
+      exec:
+        concurrency: 4
+
+    format:
+      description: Format all Dart files
+      run: dart format .
+      exec:
+        concurrency: 4
+
+    fix:
+      description: Apply Dart fixes
+      run: dart fix --apply
+      exec:
+        concurrency: 2
+
+    test:
+      description: Run tests
+      run: dart test
+      exec:
+        concurrency: 4
+      packageFilters:
+        dirExists:
+          - test
+
+    gen:
+      description: Run build_runner in generator packages
+      run: dart run build_runner build --delete-conflicting-outputs
+      exec:
+        concurrency: 1
+        failFast: true
+      packageFilters:
+        dependsOn: build_runner
+
+    gen:watch:
+      description: Watch generators
+      run: dart run build_runner watch --delete-conflicting-outputs
+      exec:
+        concurrency: 1
+      packageFilters:
+        dependsOn: build_runner
+
+    clean:
+      description: Clean workspace
+      run: melos clean
+
+    clean:generated:
+      description: Remove generated files
+      run: |
+        find . -name "*.g.dart" \
+          -o -name "*.schemix.dart" \
+          -o -name "*.freezed.dart" \
+          | xargs rm -f
+      exec:
+        concurrency: 4
+
+    publish:check:
+      description: Verify packages can be published
+      run: dart pub publish --dry-run
+      exec:
+        concurrency: 1
+
+    deps:outdated:
+      description: Check outdated dependencies
+      run: dart pub outdated
+      exec:
+        concurrency: 4
+
+    ci:
+      description: Full CI pipeline
+      run: |
+        melos run analyze &&
+        melos run gen &&
+        melos run test
+
+    quality:
+      description: Local quality check
+      run: |
+        melos run format &&
+        melos run analyze &&
+        melos run gen &&
+        melos run test

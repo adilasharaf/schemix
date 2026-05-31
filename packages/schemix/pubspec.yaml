@@ -1,0 +1,25 @@
+name: schemix
+description: >
+  Annotations, metadata models, and the generator contract interface for the
+  Schemix code-generation platform. Define a Dart model once with @Schemix
+  and generate TypeScript interfaces, Zod schemas, Drift tables, and Drizzle
+  schemas from a single source of truth.
+publish_to: none
+version: 1.0.27
+repository: https://github.com/adilasharaf/schemix
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  # Required only for BuilderOptions in GeneratorContext.
+  build: ^4.0.6
+
+dev_dependencies:
+  # Dart lints
+  lints: ^6.1.0
+
+  # Unit testing
+  test: ^1.30.0

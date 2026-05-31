@@ -1,0 +1,39 @@
+name: ts_schemix_generator
+description: >
+  TypeScript interface generator for the Schemix ecosystem.
+  Generates TypeScript interface declarations and enum definitions from
+  Schemix-annotated Dart classes. Intended to pair with
+  zod_schemix_generator for runtime validation generation.
+
+publish_to: none
+version: 0.1.0
+
+repository: https://github.com/adilasharaf/schemix
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  # Core Schemix annotations, models, and generator contracts
+  schemix: any
+
+  # Builder for schemix
+  schemix_builder: any
+
+  # Builder APIs
+  build: ^4.0.6
+
+dev_dependencies:
+  # Execute builders during development
+  build_runner: ^2.15.0
+
+  # Builder testing
+  build_test: ^3.5.15
+
+  # Unit testing
+  test: ^1.30.0
+
+  # Static analysis
+  lints: ^6.1.0
