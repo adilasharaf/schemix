@@ -31,9 +31,9 @@ final class DriftTableOverridesBuilder {
         if (!_columnBuilder.skipField(field) &&
             field.isEnum &&
             seen.add(field.dartType))
-          '  static TypeConverter<${field.dartType}, int>'
+          '  static TypeConverter<${field.dartType}, String>'
               ' get ${field.dartType.converterName} =>\n'
-              '      EnumIndexConverter<${field.dartType}>'
+              '      EnumNameConverter<${field.dartType}>'
               '(${field.dartType}.values);',
     ];
   }

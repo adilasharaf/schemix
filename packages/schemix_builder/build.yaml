@@ -19,8 +19,6 @@ builders:
       "^lib/{{}}.dart":
         - "lib/{{}}.schemix.dart"
         - "lib/{{}}.table.dart"
-        - "gen/{{}}.g.ts"
-        - "gen/{{}}.drizzle.ts"
     auto_apply: dependents
     build_to: source
     required_inputs:
@@ -34,11 +32,11 @@ builders:
     builder_factories: ["schemixIndexBuilder"]
     build_extensions:
       "$package$":
-        - "gen/schemix.g.ts"
+        - ".schemix_index_done"
     auto_apply: dependents
     build_to: source
     required_inputs:
-      - ".g.ts"
+      - "lib/schemix_registry.json"
   schemix_dart_barrel:
     target: ":schemix_builder"
     import: "package:schemix_builder/builder.dart"

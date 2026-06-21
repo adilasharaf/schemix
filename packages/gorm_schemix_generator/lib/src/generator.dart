@@ -44,6 +44,9 @@ final class GormSchemixGenerator extends SchemixGenerator {
           if (field.dartType == 'DateTime') {
             imports.add('"time"');
           }
+          if (field.db.sqlType?.toUpperCase() == 'JSONB' || field.isMap) {
+            imports.add('"gorm.io/datatypes"');
+          }
        }
     }
 

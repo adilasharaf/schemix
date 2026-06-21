@@ -11,7 +11,7 @@ final class DrizzleRelationsBuilder {
 
   List<String> generateRelations(ClassInfo cls) {
     final relationFields = cls.allFields
-        .where((f) => f.relation.hasRelation && !skipField(f))
+        .where((f) => f.relation.hasRelation && f.relation.kind != RelationKind.manyToMany && !skipField(f))
         .toList();
 
     if (relationFields.isEmpty) return const [];
@@ -26,9 +26,7 @@ final class DrizzleRelationsBuilder {
           f.relation.kind == RelationKind.hasOne,
     );
     final needsMany = relationFields.any(
-      (f) =>
-          f.relation.kind == RelationKind.hasMany ||
-          f.relation.kind == RelationKind.manyToMany,
+      (f) => f.relation.kind == RelationKind.hasMany,
     );
 
     final destructure = [if (needsOne) 'one', if (needsMany) 'many'].join(', ');
@@ -51,15 +49,21 @@ final class DrizzleRelationsBuilder {
     String target,
   ) {
     final targetVar = tableVarName(target);
+    final relationName = field.name.endsWith('Id')
+        ? field.name.substring(0, field.name.length - 2)
+        : field.name;
+
     return switch (field.relation.kind) {
       RelationKind.belongsTo =>
-        '  ${field.name}: one($targetVar, { fields: [$tableVar.${field.name}], references: [$targetVar.id] }),',
+        '  $relationName: one($targetVar, { fields: [$tableVar.${field.name}], references: [$targetVar.id] }),',
       RelationKind.hasOne when field.relation.relationFieldName != null =>
-        '  ${field.name}: one($targetVar, { fields: [$tableVar.id], references: [$targetVar.${field.relation.relationFieldName}] }),',
+        '  $relationName: one($targetVar, { fields: [$tableVar.id], references: [$targetVar.${field.relation.relationFieldName}] }),',
       RelationKind.hasOne =>
-        '  // TODO: ${field.name} — hasOne requires explicit foreignKey. Add @HasOne($target, foreignKey: \'${ownerName.camelCase}Id\')',
-      RelationKind.hasMany ||
-      RelationKind.manyToMany => '  ${field.name}: many($targetVar),',
+        '  $relationName: one($targetVar, { fields: [$tableVar.id], references: [$targetVar.${ownerName.camelCase}Id] }),',
+      RelationKind.hasMany => '  $relationName: many($targetVar),',
+      // manyToMany relations are skipped in Drizzle because junction tables 
+      // are not auto-generated. The user should use explicit models.
+      RelationKind.manyToMany => '',
       _ => '',
     };
   }

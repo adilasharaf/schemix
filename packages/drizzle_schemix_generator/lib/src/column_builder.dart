@@ -25,7 +25,8 @@ final class DrizzleColumnBuilder {
 
     // BelongsTo FK → plain text column (UUIDs are stored as text).
     if (field.relation.kind == RelationKind.belongsTo) {
-      return "$getter: text('$colName')${field.isNullable ? '' : '.notNull()'},";
+      final targetVar = tableVarName(field.relation.targetTypeName ?? 'unknown');
+      return "$getter: text('$colName').references(() => $targetVar.id)${field.isNullable ? '' : '.notNull()'},";
     }
 
     // Explicit Drizzle type override (@DrizzleType / @CustomConverter).
@@ -44,6 +45,10 @@ final class DrizzleColumnBuilder {
 
     if (field.isEnum) {
       buf.write("$fn('$colName', { enum: ${field.dartType.camelCase}Values })");
+    } else if (fn == 'numeric' && field.serialization.precisionDigits != null) {
+      final precision = field.serialization.precisionDigits;
+      final scale = field.serialization.precisionScale ?? 0;
+      buf.write("$fn('$colName', { precision: $precision, scale: $scale })");
     } else {
       buf.write("$fn('$colName')");
     }
@@ -68,6 +73,11 @@ final class DrizzleColumnBuilder {
 
     // Uniqueness.
     if (field.db.isUnique || field.db.indexUnique) buf.write('.unique()');
+
+    final tsType = field.converter.tsTypeOverride ?? (field.db.sqlType?.toUpperCase() == 'JSONB' ? 'Record<string, unknown>' : null);
+    if (tsType != null && (fn == 'jsonb' || field.isMap)) {
+      buf.write('.\$type<$tsType>()');
+    }
 
     return '$getter: $buf,';
   }
@@ -94,7 +104,7 @@ final class DrizzleColumnBuilder {
     return switch (field.dartType) {
       'String' => 'text',
       'int' => field.db.isAutoIncrement ? 'serial' : 'integer',
-      'double' || 'num' => 'real',
+      'double' || 'num' => field.serialization.precisionDigits != null ? 'numeric' : 'real',
       'bool' => 'boolean',
       'DateTime' => 'timestamp',
       'Duration' => 'integer',

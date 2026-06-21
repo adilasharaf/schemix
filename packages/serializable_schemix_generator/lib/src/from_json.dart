@@ -16,7 +16,7 @@ final class FromJsonGenerator {
     final name = cls.name;
 
     final fields = cls.allFields
-        .where((f) => !f.isIgnored && !f.serialization.isWriteOnly)
+        .where((f) => !f.isIgnored && !f.serialization.isReadOnly)
         .toList(growable: false);
 
     _log.verbose(

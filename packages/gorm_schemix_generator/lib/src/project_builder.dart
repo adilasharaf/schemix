@@ -12,19 +12,13 @@ import 'struct_builder.dart';
 import 'utils.dart';
 
 class GormProjectBuilder implements Builder {
-  GormProjectBuilder(BuilderOptions options)
-    : _outputDir = options.config['go_dir'] as String? ?? 'go',
-      _outputFile =
-          options.config['output_file'] as String? ?? '.schemix_gorm_done',
-      _goModule = options.config['go_module'] as String? ?? 'schemix_project';
+  GormProjectBuilder(BuilderOptions options) : _options = options;
 
-  final String _outputDir;
-  final String _outputFile;
-  final String _goModule;
+  final BuilderOptions _options;
 
   @override
-  Map<String, List<String>> get buildExtensions => {
-    r'$package$': ['$_outputDir/$_outputFile'],
+  Map<String, List<String>> get buildExtensions => const {
+    r'$package$': ['.schemix_gorm_done'],
   };
 
   @override
@@ -44,6 +38,11 @@ class GormProjectBuilder implements Builder {
 
     final registryContent = await buildStep.readAsString(registryId);
     final registry = CrossFileRegistry.fromJson(registryContent);
+
+    var goDir =
+        registry.options['go_dir'] as String? ??
+        _options.config['go_dir'] as String? ??
+        'go';
 
     final modelPaths = <String>{};
     for (final typeInfo in registry.allModels) {
@@ -74,81 +73,62 @@ class GormProjectBuilder implements Builder {
       allClasses.addAll(classes);
     }
 
-    final modelsToGenerate = allClasses
-        .where(
-          (c) => c.hasSchemix && c.extensions['gorm'] != false && !c.isEnum,
-        )
-        .toList();
-
-    final enumsToGenerate = allClasses
-        .where((c) => c.hasSchemix && c.extensions['gorm'] != false && c.isEnum)
-        .toList();
-
-    if (modelsToGenerate.isEmpty && enumsToGenerate.isEmpty) return;
-
-    String resolvedGoModule = _goModule;
-    if (resolvedGoModule == 'schemix_project') {
-      final goModPaths = ['go.mod', p.join(_outputDir, 'go.mod')];
-      for (final path in goModPaths) {
-        final goModFile = File(path);
-        if (goModFile.existsSync()) {
-          final lines = goModFile.readAsLinesSync();
-          for (final line in lines) {
-            if (line.startsWith('module ')) {
-              resolvedGoModule = line.substring('module '.length).trim();
-              break;
-            }
-          }
-          if (resolvedGoModule != 'schemix_project') break;
-        }
-      }
-    }
-
     final structBuilder = const GormStructBuilder();
     final enumBuilder = const GormEnumBuilder();
 
-    // Use dart:io to output files to the target directories.
-    final modelsDir = Directory(p.join(_outputDir, 'models'));
+    final modelsDir = Directory(p.join(goDir, 'models'));
     if (!modelsDir.existsSync()) {
       modelsDir.createSync(recursive: true);
     }
 
-    for (final cls in modelsToGenerate) {
+    final groupedClasses = <String, List<ClassInfo>>{};
+    for (final cls in allClasses) {
+      if (cls.hasSchemix &&
+          cls.extensions['gorm'] != false &&
+          !cls.abstractSchema &&
+          !cls.embeddable) {
+        groupedClasses.putIfAbsent(cls.assetPath, () => []).add(cls);
+      }
+    }
+
+    for (final entry in groupedClasses.entries) {
+      final path = entry.key;
+      final classes = entry.value;
+      if (classes.isEmpty) continue;
+
       final buffer = StringBuffer();
       buffer.writeln('package models\n');
 
-      final hasTime = cls.allFields.any((f) => !skipField(f) && f.dartType == 'DateTime');
-      final hasEnum = cls.allFields.any((f) => !skipField(f) && f.isEnum);
-      
-      if (hasTime || hasEnum) {
+      final hasTime = classes.any(
+        (c) =>
+            !c.isEnum &&
+            c.allFields.any((f) => !skipField(f) && f.dartType == 'DateTime'),
+      );
+
+      final hasJson = classes.any(
+        (c) =>
+            !c.isEnum &&
+            c.allFields.any((f) => !skipField(f) && (f.db.sqlType?.toUpperCase() == 'JSONB' || f.isMap)),
+      );
+
+      if (hasTime || hasJson) {
         buffer.writeln('import (');
         if (hasTime) buffer.writeln('\t"time"');
-        if (hasEnum) {
-          final enumsPath = '$resolvedGoModule/$_outputDir/enums'.replaceAll(r'\', '/');
-          buffer.writeln('\t"$enumsPath"');
-        }
+        if (hasJson) buffer.writeln('\t"gorm.io/datatypes"');
         buffer.writeln(')\n');
       }
 
-      buffer.writeln(structBuilder.build(cls));
+      for (final cls in classes) {
+        if (cls.isEnum) {
+          buffer.writeln(enumBuilder.build(cls));
+        } else {
+          buffer.writeln(structBuilder.build(cls));
+        }
+      }
 
-      final outFile = File(p.join(modelsDir.path, '${cls.name.snakeCase}.go'));
+      final baseName = p.basenameWithoutExtension(path);
+      final outFile = File(p.join(modelsDir.path, '${baseName.snakeCase}.go'));
       outFile.writeAsStringSync(buffer.toString());
-    }
-
-    if (enumsToGenerate.isNotEmpty) {
-      final enumsDir = Directory(p.join(_outputDir, 'enums'));
-      if (!enumsDir.existsSync()) {
-        enumsDir.createSync(recursive: true);
-      }
-
-      for (final enumCls in enumsToGenerate) {
-        final content = enumBuilder.build(enumCls);
-        final outFile = File(
-          p.join(enumsDir.path, '${enumCls.name.snakeCase}.go'),
-        );
-        outFile.writeAsStringSync(content);
-      }
     }
 
     // Write a dummy file to satisfy build_runner

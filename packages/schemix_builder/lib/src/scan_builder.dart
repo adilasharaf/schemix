@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:io';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
@@ -10,10 +12,12 @@ import 'logger.dart';
 import 'registry.dart';
 
 Builder schemixScanBuilder(BuilderOptions options) =>
-    const _SchemixScanBuilder();
+    _SchemixScanBuilder(options);
 
 final class _SchemixScanBuilder implements Builder {
-  const _SchemixScanBuilder();
+  const _SchemixScanBuilder(this.options);
+
+  final BuilderOptions options;
 
   static final _log = const SchemixLogger('scan');
 
@@ -31,7 +35,26 @@ final class _SchemixScanBuilder implements Builder {
     }
 
     final outputId = outputs.first;
-    final registry = CrossFileRegistry();
+    final registry = CrossFileRegistry(options.config);
+
+    final tsDir = options.config['ts_dir'] as String? ?? 'gen';
+    final goDir = options.config['go_dir'] as String? ?? 'go';
+
+    // Clear external output directories at the start of the build.
+    final tsDirEntity = Directory(tsDir);
+    if (tsDirEntity.existsSync()) {
+      for (final entity in tsDirEntity.listSync()) {
+        if (entity is File && entity.path.endsWith('.ts')) {
+          entity.deleteSync();
+        }
+      }
+    }
+
+    final modelsDir = Directory('$goDir/models');
+    if (modelsDir.existsSync()) modelsDir.deleteSync(recursive: true);
+    
+    final enumsDir = Directory('$goDir/enums');
+    if (enumsDir.existsSync()) enumsDir.deleteSync(recursive: true);
 
     final assets = await buildStep.findAssets(Glob('lib/**.dart')).toList();
     _log.scanStart(assets.length);

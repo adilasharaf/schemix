@@ -41,11 +41,12 @@ abstract final class DriftTypeResolver {
     if (builder == null) return null;
 
     final nullable = field.isNullable ? '.nullable()' : '';
+    final unique = field.db.isUnique || field.db.indexUnique ? '.unique()' : '';
 
-    // withDefault for DatabaseDefault on DateTime fields
+    // withDefault for DatabaseDefault
     final defaultClause = _defaultClause(field);
 
-    return "$colType get ${field.name} => $builder().named('$colName')$defaultClause$nullable();";
+    return "$colType get ${field.name} => $builder().named('$colName')$defaultClause$unique$nullable();";
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────
@@ -100,7 +101,11 @@ abstract final class DriftTypeResolver {
     if (field.dartType == 'DateTime') {
       return '.withDefault(currentDateAndTime)';
     }
-    return '';
+    final def = field.db.databaseDefault;
+    if (def is String) {
+      return ".withDefault(const Constant('$def'))";
+    }
+    return '.withDefault(const Constant($def))';
   }
 }
 

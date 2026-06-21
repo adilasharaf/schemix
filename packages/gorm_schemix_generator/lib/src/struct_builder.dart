@@ -12,7 +12,7 @@ class GormStructBuilder {
       if (skipField(field)) continue;
 
       final goType = _mapDartTypeToGo(field);
-      final gormTag = _buildGormTag(field);
+      final gormTag = _buildGormTag(cls, field);
       final jsonTag = 'json:"${field.effectiveJsonName}"'; 
       
       final tags = '`gorm:"$gormTag" $jsonTag`';
@@ -27,7 +27,7 @@ class GormStructBuilder {
 
   String _mapDartTypeToGo(FieldInfo field) {
     if (field.isEnum) {
-      final typeName = 'enums.${field.dartType}';
+      final typeName = field.dartType;
       if (field.isNullable) return '*$typeName';
       return typeName;
     }
@@ -41,6 +41,10 @@ class GormStructBuilder {
       'DateTime' => 'time.Time',
       _ => null, 
     };
+
+    if (field.db.sqlType?.toUpperCase() == 'JSONB' || field.isMap) {
+      return 'datatypes.JSON';
+    }
 
     if (field.relation.hasRelation) {
       if (field.relation.kind == RelationKind.hasMany || field.relation.kind == RelationKind.manyToMany) {
@@ -71,27 +75,41 @@ class GormStructBuilder {
     return type;
   }
 
-  String _buildGormTag(FieldInfo field) {
+  String _buildGormTag(ClassInfo cls, FieldInfo field) {
     final parts = <String>[];
 
     if (field.db.isPrimaryKey) {
       parts.add('primaryKey');
     }
     
-    // Gorm column name is usually the field name in snake case or defined in db generated strategy
-    final colName = field.db.dbGeneratedStrategy ?? field.name.snakeCase;
-    parts.add('column:$colName');
-
+    // Gorm column name is usually the field name in snake case
+    final colName = field.name.snakeCase;
+    
     if (field.relation.hasRelation) {
-       if (field.relation.relationFieldName != null) {
-         parts.add('foreignKey:${_capitalize(field.relation.relationFieldName!)}');
-       }
+      if (field.relation.kind == RelationKind.belongsTo) {
+        // BelongsTo is a primitive foreign key, so it gets a column tag
+        parts.add('column:$colName');
+      } else if (field.relation.kind == RelationKind.manyToMany) {
+        // ManyToMany needs a join table tag, not a column tag
+        final joinTable = field.relation.junctionTable ?? '${cls.name.snakeCase}_${field.name.snakeCase}';
+        parts.add('many2many:$joinTable');
+      } else {
+        // hasOne / hasMany should not have a column tag
+        if (field.relation.relationFieldName != null) {
+          parts.add('foreignKey:${_capitalize(field.relation.relationFieldName!)}');
+        } else {
+          parts.add('foreignKey:${_capitalize(cls.name)}Id');
+        }
+      }
     } else {
+       parts.add('column:$colName');
        if (!field.isNullable && !field.db.isPrimaryKey) {
           parts.add('not null');
        }
-       if (field.db.isUnique) {
-          parts.add('unique');
+       if (field.db.isUnique || field.db.indexUnique) {
+          parts.add('uniqueIndex');
+       } else if (field.db.isIndexed) {
+          parts.add('index');
        }
        if (field.db.databaseDefault != null) {
           parts.add('default:${field.db.databaseDefault}');

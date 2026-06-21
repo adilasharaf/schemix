@@ -72,14 +72,15 @@ final class DriftColumnBuilder {
   String _buildBelongsToColumn(FieldInfo field) {
     final colName = field.serialization.effectiveJsonName(field.name).snakeCase;
     final nullable = field.isNullable ? '.nullable()' : '';
-    return "TextColumn get ${field.name} => text().named('$colName')$nullable();";
+    final targetTable = '${field.relation.targetTypeName ?? field.dartType}Table';
+    return "TextColumn get ${field.name} => text().named('$colName').references($targetTable, #id)$nullable();";
   }
 
   String _buildEnumColumn(FieldInfo field, String tableName) {
     final colName = field.serialization.effectiveJsonName(field.name).snakeCase;
     final cn = field.dartType.converterName;
     final nullable = field.isNullable ? '.nullable()' : '';
-    return "IntColumn get ${field.name} => integer().named('$colName')$nullable.map($tableName.$cn)();";
+    return "TextColumn get ${field.name} => text().named('$colName')$nullable.map($tableName.$cn)();";
   }
 
   String _buildPrimaryKeyColumn(

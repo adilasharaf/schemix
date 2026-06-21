@@ -32,8 +32,8 @@ workspace:
   # - packages/swift_schemix_generator
 
   # Examples
-  # - examples/basic
-  - example
+  - examples/infolder
+  - examples/outfolder/example
 
   # Internal tools
   # - tools/schemix_cli
@@ -216,4 +216,4 @@ melos:
       select-package:
         scope:
           - "*schemix*"
-          - "example"
+          - "*folder"

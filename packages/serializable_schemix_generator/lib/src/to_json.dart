@@ -15,7 +15,7 @@ final class ToJsonGenerator {
     final name = cls.name;
 
     final fields = cls.allFields
-        .where((f) => !f.isIgnored && !f.serialization.isReadOnly)
+        .where((f) => !f.isIgnored && !f.serialization.isWriteOnly)
         .toList(growable: false);
 
     _log.verbose('   toJson       | $name  fields=${fields.length}');

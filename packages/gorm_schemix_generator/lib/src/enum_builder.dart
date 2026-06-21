@@ -7,7 +7,6 @@ class GormEnumBuilder {
     final buffer = StringBuffer();
     final typeName = enumInfo.name;
 
-    buffer.writeln('package enums\n');
     buffer.writeln('type $typeName string\n');
     buffer.writeln('const (');
 

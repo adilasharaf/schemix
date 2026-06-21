@@ -9,7 +9,10 @@ import 'logger.dart';
 /// Implements [TypeGraph] so it can be passed directly to [GeneratorContext]
 /// in Phase 2 without an adapter.
 class CrossFileRegistry implements TypeGraph {
+  CrossFileRegistry([this.options = const {}]);
   static final _log = const SchemixLogger('registry');
+
+  final Map<String, dynamic> options;
 
   final Map<String, TypeInfo> _types = {};
   final List<RelationInfo> _relations = [];
@@ -57,7 +60,7 @@ class CrossFileRegistry implements TypeGraph {
   void seal() {
     final cyclic = cyclicTypes;
     if (cyclic.isNotEmpty) {
-      _log.warning('!! cyclic types | ${cyclic.join(', ')}');
+      _log.verbose('!! cyclic types | ${cyclic.join(', ')}');
     } else {
       _log.verbose('   cyclic check | none');
     }
@@ -141,6 +144,7 @@ class CrossFileRegistry implements TypeGraph {
   /// Serializes the full registry to a JSON string for the build artifact.
   String toJson() {
     return jsonEncode({
+      'options': options,
       'types': _types.values.map(_typeInfoToJson).toList(),
       'relations': _relations.map(_relationInfoToJson).toList(),
     });
@@ -148,8 +152,10 @@ class CrossFileRegistry implements TypeGraph {
 
   /// Deserializes a registry from the JSON build artifact produced by Phase 1.
   static CrossFileRegistry fromJson(String source) {
-    final registry = CrossFileRegistry();
     final map = jsonDecode(source) as Map<String, dynamic>;
+    final registry = CrossFileRegistry(
+      map['options'] as Map<String, dynamic>? ?? const {},
+    );
 
     for (final raw in (map['types'] as List)) {
       registry._types[raw['name'] as String] = _typeInfoFromJson(

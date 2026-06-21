@@ -117,10 +117,20 @@ final class DriftGenerator extends SchemixGenerator {
       '${converters.isNotEmpty ? '  converters=${converters.length}' : ''}',
     );
 
+    final hasCreatedAt = cls.allFields.any((f) => f.isCreatedAt);
+    final hasUpdatedAt = cls.allFields.any((f) => f.isUpdatedAt);
+    final hasDeletedAt = cls.allFields.any((f) => f.isDeletedAt);
+    
+    final injectsCreatedAt = cls.enableTimestamps && !hasCreatedAt;
+    final injectsUpdatedAt = cls.enableTimestamps && !hasUpdatedAt;
+    final injectsDeletedAt = cls.enableSoftDelete && !hasDeletedAt;
+    
+    final generateInsertable = !(injectsCreatedAt || injectsUpdatedAt || injectsDeletedAt);
+
     return [
       '// ─── ${cls.name} ───────────────────────────────────────────────',
       '',
-      '@UseRowClass(${cls.name}, generateInsertable: true)',
+      '@UseRowClass(${cls.name}, generateInsertable: $generateInsertable)',
       'class ${cls.name}Table extends Table {',
       ...body,
       if (converters.isNotEmpty) ...['', ...converters],

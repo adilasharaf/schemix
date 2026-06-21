@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:io';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:schemix/schemix.dart';
@@ -32,36 +34,26 @@ Builder schemixFileBuilder(BuilderOptions options) =>
 ///           zod_suffix: ".g"
 ///           drizzle_suffix: ".drizzle"
 /// ```
-final class _OutputPaths {
+class _OutputPaths {
   _OutputPaths.fromOptions(BuilderOptions options)
     : serializableDir = options.config['serializable_dir'] as String? ?? 'lib',
       serializableSuffix =
           options.config['serializable_suffix'] as String? ?? '.schemix',
       driftDir = options.config['drift_dir'] as String? ?? 'lib',
-      driftSuffix = options.config['drift_suffix'] as String? ?? '.table',
-      tsDir = options.config['ts_dir'] as String? ?? 'gen',
-      goDir = options.config['go_dir'] as String? ?? 'gen',
-      zodSuffix = options.config['zod_suffix'] as String? ?? '.g',
-      drizzleSuffix = options.config['drizzle_suffix'] as String? ?? '.drizzle';
+      driftSuffix = options.config['drift_suffix'] as String? ?? '.table';
 
   final String serializableDir;
   final String serializableSuffix;
   final String driftDir;
   final String driftSuffix;
-  final String tsDir;
-  final String goDir;
-  final String zodSuffix;
-  final String drizzleSuffix;
 
-  /// Returns the four output paths for a given input stem.
+  /// Returns the output paths for a given input stem.
   ///
   /// [stem] is the part of the input path captured by `{{}}` in the
   /// build_extensions pattern — e.g. `models/user` for `lib/models/user.dart`.
   List<String> outputsFor(String stem) => [
     '$serializableDir/$stem$serializableSuffix.dart',
     '$driftDir/$stem$driftSuffix.dart',
-    '$tsDir/$stem$zodSuffix.ts',
-    '$tsDir/$stem$drizzleSuffix.ts',
   ];
 
   /// The `buildExtensions` map declared to `build_runner`.
@@ -71,10 +63,6 @@ final class _OutputPaths {
           '$serializableSuffix.dart',
       '$driftDir/{{}}'
           '$driftSuffix.dart',
-      '$tsDir/{{}}'
-          '$zodSuffix.ts',
-      '$tsDir/{{}}'
-          '$drizzleSuffix.ts',
     ],
   };
 }
@@ -197,7 +185,11 @@ final class _SchemixFileBuilder implements Builder {
     final outputs = buildStep.allowedOutputs.toList(growable: false);
 
     if (outputs.isNotEmpty) {
-      final serializableSource = _runGenerator('serializable', relevant, context);
+      final serializableSource = _runGenerator(
+        'serializable',
+        relevant,
+        context,
+      );
       await _writeOutput(
         buildStep,
         outputs[0],
@@ -232,22 +224,36 @@ final class _SchemixFileBuilder implements Builder {
       }
     }
 
-    if (outputs.length > 2) {
-      await _writeOutput(
-        buildStep,
-        outputs[2],
-        _runGenerator('zod', relevant, context),
-        'ZodGenerator',
-      );
+    // ── Dispatch to external generators via dart:io ───────────────────────
+    // outputs are no longer tracked by build_runner to support external folders
+
+    final tsDir = registry.options['ts_dir'] as String? ?? 'gen';
+    final zodSuffix = registry.options['zod_suffix'] as String? ?? '.g';
+    final drizzleSuffix =
+        registry.options['drizzle_suffix'] as String? ?? '.drizzle';
+
+    final stem = inputId.path.startsWith('lib/')
+        ? inputId.path.substring(4).replaceAll('.dart', '')
+        : inputId.path.replaceAll('.dart', '');
+
+    final zodSource = _runGenerator('zod', relevant, context);
+    if (zodSource != null) {
+      final zodFile = File('$tsDir/$stem$zodSuffix.ts');
+      if (!zodFile.parent.existsSync()) {
+        zodFile.parent.createSync(recursive: true);
+      }
+      zodFile.writeAsStringSync(zodSource);
+      _log.outputWrite(zodFile.path, 'ZodGenerator');
     }
 
-    if (outputs.length > 3) {
-      await _writeOutput(
-        buildStep,
-        outputs[3],
-        _runGenerator('drizzle', relevant, context),
-        'DrizzleGenerator',
-      );
+    final drizzleSource = _runGenerator('drizzle', relevant, context);
+    if (drizzleSource != null) {
+      final drizzleFile = File('$tsDir/$stem$drizzleSuffix.ts');
+      if (!drizzleFile.parent.existsSync()) {
+        drizzleFile.parent.createSync(recursive: true);
+      }
+      drizzleFile.writeAsStringSync(drizzleSource);
+      _log.outputWrite(drizzleFile.path, 'DrizzleGenerator');
     }
   }
 

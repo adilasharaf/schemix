@@ -43,7 +43,11 @@ abstract final class ZodTypeResolver {
         applyValidation: false,
       );
       var expr = 'z.array($itemExpr)';
-      if (field.validation.required) expr = '$expr.nonempty()';
+      if (field.validation.required) {
+        expr = '$expr.nonempty()';
+      } else if (field.relation.kind == RelationKind.hasMany || field.relation.kind == RelationKind.manyToMany) {
+        expr = '$expr.default([])';
+      }
       return expr;
     }
 

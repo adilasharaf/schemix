@@ -80,6 +80,10 @@ String assembleFile(
     return '';
   }
 
+  final usesEnum = classes
+      .where(generator.shouldRun)
+      .any((c) => c.allFields.any((f) => f.isEnum));
+
   log.outputWrite(assetPath, 'serializable');
-  return '${SerializableHeader.build(assetPath)}\n\n$blocks\n';
+  return '${SerializableHeader.build(assetPath, usesEnum: usesEnum)}\n\n$blocks\n';
 }

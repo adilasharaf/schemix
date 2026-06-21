@@ -29,11 +29,7 @@ final class DrizzleImportCollector {
 
       // Cross-file relation imports.
       if (field.relation.hasRelation && field.relation.targetTypeName != null) {
-        final isUnresolvableHasOne =
-            field.relation.kind == RelationKind.hasOne &&
-            field.relation.relationFieldName == null;
-
-        if (!isUnresolvableHasOne) {
+        if (field.relation.kind != RelationKind.manyToMany) {
           final targetName = field.relation.targetTypeName!;
 
           // Skip the import when the target type has drizzle generation

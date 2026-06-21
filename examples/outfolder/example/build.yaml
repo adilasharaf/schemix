@@ -1,0 +1,65 @@
+targets:
+  $default:
+    builders:
+      # ── Phase 1: scan ─────────────────────────────────────────────────────
+      schemix_builder|schemix_scan:
+        enabled: true
+        options:
+          ts_dir: "../ts/src"
+          go_dir: "../go/src"
+
+      # ── Phase 2: generate ─────────────────────────────────────────────────
+      # schemix_file is the ONLY builder that writes files.
+      schemix_builder|schemix_file:
+        enabled: true
+        generate_for:
+          include:
+            - lib/models/**.dart
+        options:
+          serializable_dir: "lib"
+          serializable_suffix: ".schemix"
+          drift_dir: "lib"
+          drift_suffix: ".table"
+          models_package: "example_outfolder"
+          
+          ts_dir: "../ts/src"
+          go_dir: "../go/src"
+          
+          zod_suffix: ".g"
+          drizzle_suffix: ".drizzle"
+
+      # ── Phase 3: barrel re-export ─────────────────────────────────────────
+      schemix_builder|schemix_index:
+        enabled: true
+        options:
+          output_dir: "../ts/src"
+          output_file: "schemix.g.ts"
+          # Ensure glob_pattern points to the same directory as ts_dir
+          glob_pattern: "../ts/src/**.{g,drizzle}.ts"
+
+      # ── Registration-only builders ────────────────────────────────────────
+      # All 5 register their generator into GeneratorRegistry so schemix_file
+      # can dispatch to them. None of them write any files.
+      serializable_schemix_generator|serializable_schemix_generator:
+        enabled: true
+      drift_schemix_generator|drift_schemix_generator:
+        enabled: true
+      drizzle_schemix_generator|drizzle_schemix_generator:
+        enabled: true
+      zod_schemix_generator|zodBuilder:
+        enabled: true
+      ts_schemix_generator|tsBuilder:
+        enabled: true
+      gorm_schemix_generator|gorm_schemix_generator:
+        enabled: true
+
+      schemix_builder|schemix_dart_barrel:
+        enabled: true
+      drift_schemix_generator|drift_barrel_builder:
+        enabled: true
+      drift_dev:
+        enabled: false
+      drift_dev|analyzer:
+        enabled: true
+      drift_dev|modular:
+        enabled: true
