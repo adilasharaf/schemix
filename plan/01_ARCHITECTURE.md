@@ -16,6 +16,7 @@ Phase 2 — SchemixFileBuilder  (+ any custom generators)
            lib/{name}.table.dart
            gen/{name}.g.ts
            gen/{name}.drizzle.ts
+           gen/{name}.go
   Purpose: full per-file code generation using the type graph
 
 Phase 3 — SchemixIndexBuilder
@@ -25,7 +26,7 @@ Phase 3 — SchemixIndexBuilder
 ```
 
 ### Builder Ordering
-All five generator registration builders (Zod, TS, Serializable, Drift, Drizzle) must declare `runs_before: ["schemix_builder|schemix_file"]` in their `build.yaml`.
+All six generator registration builders (Zod, TS, Serializable, Drift, Drizzle, Gorm) must declare `runs_before: ["schemix_builder|schemix_file"]` in their `build.yaml`.
 
 ## 2. The TypeGraph Abstraction
 Because `build_runner` processes one file at a time during Phase 2, a generator looking at `User.dart` cannot directly analyze `Post.dart` to understand an `@HasMany(Post)` relationship.

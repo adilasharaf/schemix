@@ -10,11 +10,12 @@ This document provides a summary of the most commonly used Schemix annotations. 
 ## 2. Field Metadata
 - `@SchemixField` / `@AppField`: Controls field visibility (`searchable`, `hidden`, `internal`, `readonly`).
 - `@IgnoreField()`: Excludes the field entirely from all generators.
+- `@GormIgnore()`: Excludes the field from Gorm generator.
 
 ## 3. Database & Primary Keys
 - `@PrimaryKey(autoGenerate: true)`: Marks the primary key. If string, emits a UUID v4 client-side default.
 - `@Indexed(unique: true)`: Creates an index or enforces uniqueness.
-- `@SqlType(String)`, `@DrizzleType(String)`, `@DriftType(String)`: Overrides the raw database type for specific generator targets.
+- `@SqlType(String)`, `@DrizzleType(String)`, `@DriftType(String)`, `@GormType(String)`: Overrides the raw database type for specific generator targets.
 
 ## 4. Relations
 - `@BelongsTo(TargetClass)`: Many-to-one. The annotated field stores the foreign-key ID.
@@ -29,12 +30,15 @@ All validation annotations emit corresponding Zod schema constraints.
 - `@Length(min, max)`: Emits `.min().max()`.
 - `@Email()`, `@Url()`, `@Uuid()`: Format validators.
 
-## 6. Type Overrides
+## 6. Serialization
+- `@FirestoreDateTime()`: Specialized serialization for DateTime fields mapping to Firestore Timestamps.
+
+## 7. Type Overrides
 - `@TsType(String)`: Overrides the TypeScript type.
 - `@ZodType(String)`: Overrides the full Zod expression.
 - `@CustomConverter(...)`: Unified override spanning all generation targets.
 
-## 7. Security & Sync
+## 8. Security & Sync
 - `@Encrypted()` / `@Hashed()`: Marks fields as sensitive, redacting them from public API outputs.
 - `@OfflineOnly()`: Never synced to the server.
 - `@CloudOnly()`: Never stored locally.

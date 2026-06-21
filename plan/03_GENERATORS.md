@@ -7,6 +7,7 @@ Schemix provides several first-party generators:
 - **`schemix_ts_generator`**: Often paired with Zod, produces TypeScript interfaces.
 - **`schemix_drift_generator`**: Produces `.table.dart` Drift Table subclasses for local SQLite databases.
 - **`schemix_drizzle_generator`**: Produces `.drizzle.ts` Drizzle ORM table schemas for remote Postgres/SQL databases.
+- **`gorm_schemix_generator`**: Produces `.go` files with Go structs and Gorm ORM tags for Go backends.
 - **`schemix_serializable_generator`**: Produces `.schemix.dart` containing Dart `fromJson`/`toJson` logic and `copyWith` helpers.
 
 ## Writing a Custom Generator

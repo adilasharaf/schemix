@@ -104,6 +104,7 @@ lib/user.schemix.dart     ← Dart JSON serialization
 lib/user.table.dart       ← Drift table class
 gen/user.g.ts             ← Zod schema + TypeScript interface
 gen/user.drizzle.ts       ← Drizzle ORM table schema
+gen/user.go               ← Go struct with Gorm tags
 gen/schemix.g.ts          ← Barrel re-export
 ```
 
@@ -145,6 +146,7 @@ class Business { ... }
 | `generateZod`      | `bool`    | `true`                   | Emit `gen/{path}.g.ts`                                  |
 | `generateDrift`    | `bool`    | `true`                   | Emit `lib/{path}.table.dart`                            |
 | `generateDrizzle`  | `bool`    | `true`                   | Emit `gen/{path}.drizzle.ts`                            |
+| `generateGorm`     | `bool`    | `true`                   | Emit `gen/{path}.go`                                    |
 
 ---
 
@@ -697,6 +699,17 @@ final int legacyId;
 
 ---
 
+#### `@FirestoreDateTime`
+
+Enables specialized serialization logic for DateTime fields to support Firestore Timestamp conversion seamlessly.
+
+```dart
+@FirestoreDateTime()
+final DateTime createdAt;
+```
+
+---
+
 ### 7. Type Overrides
 
 #### `@TsType`
@@ -740,6 +753,17 @@ final Map<String, dynamic>? metadata;
 
 ---
 
+#### `@GormType`
+
+Overrides the Go type for this field in Gorm structs.
+
+```dart
+@GormType('json.RawMessage')
+final Map<String, dynamic> metadata;
+```
+
+---
+
 ### 8. Platform-Specific Exclusions
 
 Use these to exclude a field from a single generator target while keeping it in all others.
@@ -772,6 +796,17 @@ Excludes this field from the Zod schema and TypeScript interface only.
 
 ```dart
 @ZodIgnore()
+final String internalServerId;
+```
+
+---
+
+#### `@GormIgnore`
+
+Excludes this field from the Gorm struct generator only.
+
+```dart
+@GormIgnore()
 final String internalServerId;
 ```
 

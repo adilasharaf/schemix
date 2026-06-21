@@ -8,6 +8,7 @@ You define a Dart model once, and Schemix generates:
 - TypeScript interfaces (for the frontend/Node backend)
 - Drift tables (for local Dart SQL databases)
 - Drizzle schemas (for TypeScript SQL ORMs)
+- Go structs with Gorm tags (for Go backend)
 - JSON serialization (for Dart models)
 
 ## How It Works
@@ -31,6 +32,7 @@ Schemix is split into a core package and several generator plugins.
 | `schemix_zod_generator`          | Zod + TypeScript output                                             | `dev_dependency`            |
 | `schemix_drift_generator`        | Drift table classes                                                 | `dev_dependency`            |
 | `schemix_drizzle_generator`      | Drizzle ORM schemas                                                 | `dev_dependency`            |
+| `gorm_schemix_generator`         | Go structs and Gorm tags                                            | `dev_dependency`            |
 | `schemix_serializable_generator` | Dart JSON serialization                                             | `dev_dependency`            |
 | `schemix_firebase`               | Firebase type descriptors (Timestamp, GeoPoint, etc.)               | `dependency` (optional)     |
 | `schemix_generator_sdk`          | Test utilities for generator authors                                | `dev_dependency` (optional) |
