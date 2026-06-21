@@ -8,7 +8,6 @@ const _userClass = ClassInfo(
   name: 'User',
   assetPath: 'lib/user.dart',
   hasSchemix: true,
-  generators: GeneratorFlags(drift: true),
   tableName: 'users',
   ownFields: [
     FieldInfo(
@@ -28,53 +27,34 @@ const _userClass = ClassInfo(
 
 void main() {
   final generator = DriftGenerator();
-
-  group('DriftGenerator.shouldRun', () {
-    test('returns true for drift-enabled non-abstract class', () {
-      expect(generator.shouldRun(_userClass), isTrue);
-    });
-
-    test('returns false when generators.drift is false', () {
+  group('DriftGenerator._shouldGenerate', () {
+    test('generates when no skip extension', () {
       const cls = ClassInfo(
-        name: 'NoDrift',
-        assetPath: 'lib/no_drift.dart',
+        name: 'User',
+        assetPath: 'lib/user.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drift: false),
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(DriftGenerator().shouldRun(cls), isTrue);
     });
 
-    test('returns false for abstract schema', () {
-      const cls = ClassInfo(
-        name: 'Base',
-        assetPath: 'lib/base.dart',
+    test('suppressed when extensions[drift] == false', () {
+      final cls = const ClassInfo(
+        name: 'DrizzleOnly',
+        assetPath: 'lib/drizzle_only.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drift: true),
-        abstractSchema: true,
+        extensions: {'drift': false},
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(DriftGenerator().shouldRun(cls), isFalse);
     });
 
-    test('returns false for embeddable class', () {
-      const cls = ClassInfo(
-        name: 'Address',
-        assetPath: 'lib/address.dart',
-        hasSchemix: true,
-        generators: GeneratorFlags(drift: true),
-        embeddable: true,
-      );
-      expect(generator.shouldRun(cls), isFalse);
-    });
-
-    test('returns false for enum', () {
+    test('skipped for enum', () {
       const cls = ClassInfo(
         name: 'Status',
         assetPath: 'lib/status.dart',
         hasSchemix: true,
         isEnum: true,
-        generators: GeneratorFlags(drift: true),
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(DriftGenerator().shouldRun(cls), isFalse);
     });
   });
 
@@ -138,7 +118,6 @@ void main() {
         name: 'Post',
         assetPath: 'lib/post.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drift: true),
         enableTimestamps: true,
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
@@ -154,7 +133,6 @@ void main() {
         name: 'Post',
         assetPath: 'lib/post.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drift: true),
         enableSoftDelete: true,
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
@@ -172,7 +150,6 @@ void main() {
         name: 'NoTable',
         assetPath: 'lib/no_table.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drift: false),
       );
       final out = generator.generateFile([cls], 'lib/no_table.dart', 'models');
       expect(out, isEmpty);

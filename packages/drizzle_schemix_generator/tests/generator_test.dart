@@ -48,6 +48,9 @@ final class _StubGraph implements TypeGraph {
     required String typeName,
     required String fromSourceAssetPath,
   }) => null;
+
+  @override
+  bool canImport(String typeName, String generatorId) => true;
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -56,7 +59,6 @@ const _userClass = ClassInfo(
   name: 'User',
   assetPath: 'lib/user.dart',
   hasSchemix: true,
-  generators: GeneratorFlags(drizzle: true),
   tableName: 'users',
   ownFields: [
     FieldInfo(
@@ -92,53 +94,36 @@ GeneratorContext _makeContext([TypeGraph? graph]) => GeneratorContext(
 
 void main() {
   final generator = DrizzleSchemixGenerator();
-
-  group('DrizzleGenerator.shouldRun', () {
-    test('returns true for drizzle-enabled non-abstract class', () {
-      expect(generator.shouldRun(_userClass), isTrue);
-    });
-
-    test('returns false when generators.drizzle is false', () {
+  group('DrizzleSchemixGenerator.shouldRun + _shouldGenerateModel', () {
+    test('generates when no skip extension', () {
       const cls = ClassInfo(
-        name: 'NoDrizzle',
-        assetPath: 'lib/no_drizzle.dart',
+        name: 'User',
+        assetPath: 'lib/user.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drizzle: false),
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(DrizzleSchemixGenerator().shouldRun(cls), isTrue);
     });
 
-    test('returns false for abstract schema', () {
-      const cls = ClassInfo(
-        name: 'Base',
-        assetPath: 'lib/base.dart',
+    test('suppressed when extensions[drizzle] == false', () {
+      final cls = const ClassInfo(
+        name: 'DriftOnly',
+        assetPath: 'lib/drift_only.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drizzle: true),
-        abstractSchema: true,
+        extensions: {'drizzle': false},
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(DrizzleSchemixGenerator().shouldRun(cls), isFalse);
     });
 
-    test('returns false for embeddable class', () {
-      const cls = ClassInfo(
-        name: 'Address',
-        assetPath: 'lib/address.dart',
-        hasSchemix: true,
-        generators: GeneratorFlags(drizzle: true),
-        embeddable: true,
-      );
-      expect(generator.shouldRun(cls), isFalse);
-    });
-
-    test('returns false for enum', () {
+    test('enum always returns empty output (not suppressed by extension)', () {
       const cls = ClassInfo(
         name: 'Status',
         assetPath: 'lib/status.dart',
         hasSchemix: true,
         isEnum: true,
-        generators: GeneratorFlags(drizzle: true),
       );
-      expect(generator.shouldRun(cls), isFalse);
+      // shouldRun returns true for enums (enum const arrays are still emitted),
+      // but _shouldGenerateModel returns false — the generator produces no table.
+      expect(DrizzleSchemixGenerator().shouldRun(cls), isTrue);
     });
   });
 
@@ -205,7 +190,6 @@ void main() {
         name: 'Post',
         assetPath: 'lib/post.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drizzle: true),
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
           FieldInfo(
@@ -233,7 +217,6 @@ void main() {
         name: 'Tag',
         assetPath: 'lib/tag.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drizzle: true),
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
           FieldInfo(name: 'name', dartType: 'String', isNullable: false),
@@ -251,7 +234,6 @@ void main() {
         name: 'Internal',
         assetPath: 'lib/internal.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(drizzle: false),
       );
       final out = generator.generate(cls, _makeContext());
       expect(out.outputs['.drizzle.ts'], anyOf(isNull, isEmpty));

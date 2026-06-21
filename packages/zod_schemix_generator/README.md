@@ -46,7 +46,7 @@ dart run build_runner build
 Produces `gen/user.g.ts`:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // ── User (Schema) ──
 export const UserSchema: z.ZodType<User> = z.object({
@@ -70,12 +70,12 @@ targets:
       zod_schemix_generator|zodBuilder:
         enabled: true
         options:
-          dateTimeAsString: true   # default: true
+          dateTimeAsString: true # default: true
 ```
 
-| Option              | Type   | Default | Description                                               |
-| ------------------- | ------ | ------- | --------------------------------------------------------- |
-| `dateTimeAsString`  | `bool` | `true`  | Emit `DateTime` fields as `z.string().datetime(...)`. Currently the only supported mode; reserved for future `dateTimeAsNumber` or native `Date` variants. |
+| Option             | Type   | Default | Description                                                                                                                                                |
+| ------------------ | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dateTimeAsString` | `bool` | `true`  | Emit `DateTime` fields as `z.string().datetime(...)`. Currently the only supported mode; reserved for future `dateTimeAsNumber` or native `Date` variants. |
 
 ---
 
@@ -83,53 +83,53 @@ targets:
 
 ### Primitive type mapping
 
-| Dart type            | Zod expression                          |
-| -------------------- | --------------------------------------- |
-| `String`             | `z.string()`                            |
-| `int`                | `z.number().int()`                      |
-| `double` / `num`     | `z.number()`                            |
-| `bool`               | `z.boolean()`                           |
-| `DateTime`           | `z.string().datetime({ offset: true })` |
-| `Uint8List`          | `z.string().base64()`                   |
-| `dynamic` / `Object` | `z.unknown()`                           |
-| `Null`               | `z.null()`                              |
-| `Map<K, V>`          | `z.record(z.string(), <V expr>)`        |
-| `List<T>`            | `z.array(<T expr>)`                     |
-| Firebase `Timestamp` | `firestoreTimestampSchema` (+ import)   |
-| Firebase `GeoPoint`  | `firestoreGeoPointSchema` (+ import)    |
-| Firebase `DocumentReference` | `firestoreDocRefSchema` (+ import) |
-| Unknown model        | `z.unknown()`                           |
+| Dart type                    | Zod expression                          |
+| ---------------------------- | --------------------------------------- |
+| `String`                     | `z.string()`                            |
+| `int`                        | `z.number().int()`                      |
+| `double` / `num`             | `z.number()`                            |
+| `bool`                       | `z.boolean()`                           |
+| `DateTime`                   | `z.string().datetime({ offset: true })` |
+| `Uint8List`                  | `z.string().base64()`                   |
+| `dynamic` / `Object`         | `z.unknown()`                           |
+| `Null`                       | `z.null()`                              |
+| `Map<K, V>`                  | `z.record(z.string(), <V expr>)`        |
+| `List<T>`                    | `z.array(<T expr>)`                     |
+| Firebase `Timestamp`         | `firestoreTimestampSchema` (+ import)   |
+| Firebase `GeoPoint`          | `firestoreGeoPointSchema` (+ import)    |
+| Firebase `DocumentReference` | `firestoreDocRefSchema` (+ import)      |
+| Unknown model                | `z.unknown()`                           |
 
 ### Validation chain mapping
 
-| Annotation / flag          | Zod chain addition                               |
-| -------------------------- | ------------------------------------------------ |
-| `@Email()`                 | `.email()`                                       |
-| `@Url()`                   | `.url()`                                         |
-| `@Uuid()`                  | `.uuid()`                                        |
-| `@IpAddress()`             | `.ip()`                                          |
-| `@Regex(pattern)`          | `.regex(/pattern/u)`                             |
-| `@Length(min, max)`        | `.min(n)` / `.max(n)` / both                     |
-| `@Required` on String      | `.min(1)`                                        |
-| `@Required` on List        | `.nonempty()`                                    |
-| `@Min(n)` on number        | `.gte(n)`                                        |
-| `@Max(n)` on number        | `.lte(n)`                                        |
-| `@AllowedValues([...])`    | `.refine(v => [...].includes(v))`                |
-| `@DisallowValues([...])`   | `.refine(v => ![...].includes(v))`               |
-| Nullable field             | `.nullish()` appended after base expression      |
-| `@DatabaseDefault(value)`  | `.catch(value)` appended after base expression   |
+| Annotation / flag         | Zod chain addition                             |
+| ------------------------- | ---------------------------------------------- |
+| `@Email()`                | `.email()`                                     |
+| `@Url()`                  | `.url()`                                       |
+| `@Uuid()`                 | `.uuid()`                                      |
+| `@IpAddress()`            | `.ip()`                                        |
+| `@Regex(pattern)`         | `.regex(/pattern/u)`                           |
+| `@Length(min, max)`       | `.min(n)` / `.max(n)` / both                   |
+| `@Required` on String     | `.min(1)`                                      |
+| `@Required` on List       | `.nonempty()`                                  |
+| `@Min(n)` on number       | `.gte(n)`                                      |
+| `@Max(n)` on number       | `.lte(n)`                                      |
+| `@AllowedValues([...])`   | `.refine(v => [...].includes(v))`              |
+| `@DisallowValues([...])`  | `.refine(v => ![...].includes(v))`             |
+| Nullable field            | `.nullish()` appended after base expression    |
+| `@DatabaseDefault(value)` | `.catch(value)` appended after base expression |
 
 ### Other features
 
-| Feature                                 | Trigger                                                       |
-| --------------------------------------- | ------------------------------------------------------------- |
-| `z.lazy(() => FooSchema)`               | Type participates in a reference cycle (intra- or cross-file) |
-| `z.ZodType<T>` explicit type annotation | Every schema constant                                         |
-| Cross-file `import { FooSchema }` line  | Field references a model from a different source file         |
-| Dependency-ordered schema constants     | Automatic topological sort; dependencies always declared first |
-| `@ZodType(schema)` override             | Full Zod expression override for a field                      |
-| `@TsType(zodSchema)` override           | Alternate Zod schema override via TS type annotation          |
-| `@CustomConverter(tsConverter)` override | Raw TS converter string used verbatim                        |
+| Feature                                  | Trigger                                                        |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `z.lazy(() => FooSchema)`                | Type participates in a reference cycle (intra- or cross-file)  |
+| `z.ZodType<T>` explicit type annotation  | Every schema constant                                          |
+| Cross-file `import { FooSchema }` line   | Field references a model from a different source file          |
+| Dependency-ordered schema constants      | Automatic topological sort; dependencies always declared first |
+| `@ZodType(schema)` override              | Full Zod expression override for a field                       |
+| `@TsType(zodSchema)` override            | Alternate Zod schema override via TS type annotation           |
+| `@CustomConverter(tsConverter)` override | Raw TS converter string used verbatim                          |
 
 ---
 
@@ -137,19 +137,18 @@ targets:
 
 ### Fields
 
-| Condition             | Reason                                                   |
-| --------------------- | -------------------------------------------------------- |
-| `@IgnoreField`        | Excluded from all outputs                                |
-| `@ZodIgnore`          | Explicit Zod-only exclusion                              |
-| `@OfflineOnly`        | Field never reaches the server / TypeScript layer        |
+| Condition      | Reason                                            |
+| -------------- | ------------------------------------------------- |
+| `@IgnoreField` | Excluded from all outputs                         |
+| `@ZodIgnore`   | Explicit Zod-only exclusion                       |
+| `@OfflineOnly` | Field never reaches the server / TypeScript layer |
 
 ### Classes
 
-| Condition                                                          |
-| ------------------------------------------------------------------ |
-| `generators.zod == false` (`generateZod: false` in `@Schemix`)    |
-| `manualImplementation == true` (`@ManualImplementation`)           |
-| `hasSchemix == false` and `isEnum == false`                        |
+| Condition                                                |
+| -------------------------------------------------------- |
+| `manualImplementation == true` (`@ManualImplementation`) |
+| `hasSchemix == false` and `isEnum == false`              |
 
 ---
 

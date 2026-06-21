@@ -1,0 +1,10 @@
+builders:
+  gorm_schemix_generator:
+    import: "package:gorm_schemix_generator/builder.dart"
+    builder_factories: ["gormProjectBuilder"]
+    build_extensions:
+      "$package$": ["go/.schemix_gorm_done"]
+    auto_apply: dependents
+    build_to: source
+    required_inputs:
+      - "$package$lib/schemix_registry.json"

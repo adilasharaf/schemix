@@ -9,7 +9,6 @@ import 'utils.dart';
 
 /// Schemix generator that produces Drizzle ORM table schemas.
 ///
-/// For every source file that contains at least one `@Schemix(generateDrizzle:
 /// true)` class, this generator emits a `.drizzle.ts` file containing:
 ///
 /// - `pgTable` schema declarations for each model.
@@ -22,7 +21,7 @@ import 'utils.dart';
 /// ```dart
 /// GeneratorRegistry.register(DrizzleSchemixGenerator());
 /// ```
-final class DrizzleSchemixGenerator implements SchemixGenerator {
+final class DrizzleSchemixGenerator extends SchemixGenerator {
   DrizzleSchemixGenerator()
     : _columnBuilder = const DrizzleColumnBuilder(),
       _tableBuilder = const DrizzleTableBuilder(DrizzleColumnBuilder()),
@@ -64,7 +63,7 @@ final class DrizzleSchemixGenerator implements SchemixGenerator {
   /// source file produce identical output.
   @override
   GeneratorOutput generate(ClassInfo classInfo, GeneratorContext context) {
-    if (!classInfo.generators.drizzle && !classInfo.isEnum) {
+    if (classInfo.extensions['drizzle'] == false && !classInfo.isEnum) {
       return const GeneratorOutput.empty();
     }
 
@@ -149,7 +148,7 @@ final class DrizzleSchemixGenerator implements SchemixGenerator {
 
   bool _shouldGenerateModel(ClassInfo cls) =>
       cls.hasSchemix &&
-      cls.generators.drizzle &&
+      cls.extensions['drizzle'] != false &&
       !cls.abstractSchema &&
       !cls.embeddable &&
       !cls.isEnum;

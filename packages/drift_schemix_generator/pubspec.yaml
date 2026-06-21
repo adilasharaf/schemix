@@ -1,7 +1,6 @@
 name: drift_schemix_generator
 description: >
   Drift table generator for Schemix. Produces a Drift Table subclass for every
-  @Schemix-annotated model class with generateDrift: true.
 publish_to: none
 version: 0.1.0
 repository: https://github.com/adilasharaf/schemix
@@ -16,6 +15,7 @@ dependencies:
   build: ^4.0.6
   schemix_builder: any
   test: ^1.31.1
+  path: ^1.9.1
 
 dev_dependencies:
   drift: ^2.31.0

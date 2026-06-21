@@ -70,7 +70,11 @@ final class ZodSchemaGenerator {
     required Map<String, Set<String>> crossFileImports,
   }) {
     String? modelSchemaName(String typeName) {
-      if (_graph.resolve(typeName) == null) return null;
+      // Skip cross-file import when the target type has zod generation disabled
+      // — no .g.ts file will exist for it.
+      if (!_graph.canImport(typeName, 'zod')) {
+        return null;
+      }
       if (_graph.relativeImportFor(
             typeName: typeName,
             fromSourceAssetPath: assetPath,
@@ -91,12 +95,6 @@ final class ZodSchemaGenerator {
     );
 
     if (field.isNullable) expr = '$expr.nullish()';
-
-    if (field.db.databaseDefault case final def?) {
-      if (DefaultResolver.toZodCatch(def.toString()) case final catch_?) {
-        expr = '$expr.catch($catch_)';
-      }
-    }
 
     return expr;
   }

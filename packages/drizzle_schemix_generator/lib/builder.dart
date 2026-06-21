@@ -1,5 +1,5 @@
 import 'package:build/build.dart';
-import 'package:schemix_builder/schemix_builder.dart';
+import 'package:schemix/schemix.dart';
 
 import 'src/generator.dart';
 

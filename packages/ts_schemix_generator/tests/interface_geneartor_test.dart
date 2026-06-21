@@ -31,6 +31,9 @@ final class _StubGraph implements TypeGraph {
     required String typeName,
     required String fromSourceAssetPath,
   }) => null;
+
+  @override
+  bool canImport(String typeName, String generatorId) => true;
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -179,7 +182,6 @@ void main() {
         name: 'User',
         assetPath: 'lib/user.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: true),
       );
       expect(gen.shouldRun(cls), isTrue);
     });
@@ -200,7 +202,6 @@ void main() {
         name: 'Manual',
         assetPath: 'lib/manual.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: true),
         manualImplementation: true,
       );
       expect(gen.shouldRun(cls), isFalse);
@@ -211,7 +212,6 @@ void main() {
         name: 'Internal',
         assetPath: 'lib/internal.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: false),
       );
       expect(gen.shouldRun(cls), isFalse);
     });
@@ -234,7 +234,6 @@ void main() {
           name: 'User',
           assetPath: 'lib/models.dart',
           hasSchemix: true,
-          generators: GeneratorFlags(zod: true),
           ownFields: [
             FieldInfo(name: 'id', dartType: 'String', isNullable: false),
             FieldInfo(name: 'name', dartType: 'String', isNullable: false),

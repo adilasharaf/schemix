@@ -15,7 +15,7 @@ import 'interface_generator.dart';
 ///
 /// This generator deliberately does **not** emit Zod schema `z.object({...})`
 /// blocks — that is the responsibility of `zod_schemix_generator`.
-final class TsGenerator implements SchemixGenerator {
+final class TsGenerator extends SchemixGenerator {
   static final _log = const SchemixLogger('ts');
 
   @override
@@ -27,7 +27,7 @@ final class TsGenerator implements SchemixGenerator {
   @override
   bool shouldRun(ClassInfo classInfo) =>
       (classInfo.isEnum ||
-          (classInfo.generators.zod && classInfo.hasSchemix)) &&
+          (classInfo.extensions['zod'] != false && classInfo.hasSchemix)) &&
       !classInfo.manualImplementation;
 
   @override
@@ -73,7 +73,7 @@ final class TsGenerator implements SchemixGenerator {
 
   String _skipReason(ClassInfo cls) {
     if (cls.manualImplementation) return 'manual implementation';
-    if (!cls.isEnum && !cls.generators.zod) return 'zod disabled';
+    if (!cls.isEnum && cls.extensions['zod'] == false) return 'zod disabled';
     if (!cls.isEnum && !cls.hasSchemix) return 'no schemix annotation';
     return 'unknown';
   }

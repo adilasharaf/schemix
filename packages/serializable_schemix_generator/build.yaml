@@ -3,9 +3,10 @@ builders:
     import: "package:serializable_schemix_generator/builder.dart"
     builder_factories: ["serializableBuilder"]
     build_extensions:
-      "^lib/{{}}.dart":
-        - "lib/{{}}.schemix.dart"
+      "lib/$lib$": []
     auto_apply: dependents
-    build_to: source
+    build_to: cache
     required_inputs:
       - "$package$lib/schemix_registry.json"
+    runs_before:
+      - "schemix_builder|schemix_file"

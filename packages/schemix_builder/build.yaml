@@ -24,7 +24,9 @@ builders:
     auto_apply: dependents
     build_to: source
     required_inputs:
-      - "lib/schemix_registry.json"
+      - "$package$lib/schemix_registry.json"
+    runs_before:
+      - "drift_dev"
 
   schemix_index:
     target: ":schemix_builder"
@@ -35,4 +37,18 @@ builders:
         - "gen/schemix.g.ts"
     auto_apply: dependents
     build_to: source
-    runs_before: []
+    required_inputs:
+      - ".g.ts"
+  schemix_dart_barrel:
+    target: ":schemix_builder"
+    import: "package:schemix_builder/builder.dart"
+    builder_factories: ["schemixDartBarrelBuilder"]
+    build_extensions:
+      "$package$":
+        - "lib/schemix.dart"
+    auto_apply: dependents
+    build_to: source
+    required_inputs:
+      - "$package$lib/schemix_registry.json"
+
+

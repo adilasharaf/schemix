@@ -335,11 +335,11 @@ class ClassInfo {
     this.cacheable = false,
     this.syncable = false,
     this.embeddable = false,
-    this.generators = const GeneratorFlags(),
     this.sync = const SyncMeta(),
     this.manualImplementation = false,
     this.compositeIndexes = const [],
     this.ctorParamNames = const {},
+    this.extensions = const {},
   });
   final String name;
   final String assetPath;
@@ -361,11 +361,18 @@ class ClassInfo {
   final bool cacheable;
   final bool syncable;
   final bool embeddable;
-  final GeneratorFlags generators;
   final SyncMeta sync;
   final bool manualImplementation;
   final List<CompositeIndexInfo> compositeIndexes;
   final Set<String> ctorParamNames;
+
+  /// Open slot for generator opt-out flags and other generator-specific
+  /// per-class metadata. Populated by the scan builder from registered
+  /// [GeneratorRegistry] skip annotations.
+  ///
+  /// Generators read `extensions['<id>'] != false` to decide whether to run.
+  /// Absence of a key and `true` both mean "generate". Only `false` suppresses.
+  final Map<String, Object?> extensions;
 
   List<FieldInfo> get allFields => [...inheritedFields, ...ownFields];
 }
@@ -402,24 +409,6 @@ class RelationInfo {
   final String? relationName;
 }
 
-class GeneratorFlags {
-  const GeneratorFlags({
-    this.zod = true,
-    this.drift = false,
-    this.drizzle = false,
-  });
-  final bool zod;
-  final bool drift;
-  final bool drizzle;
-
-  GeneratorFlags copyWith({bool? zod, bool? drift, bool? drizzle}) =>
-      GeneratorFlags(
-        zod: zod ?? this.zod,
-        drift: drift ?? this.drift,
-        drizzle: drizzle ?? this.drizzle,
-      );
-}
-
 class SyncMeta {
   const SyncMeta({this.syncable = false, this.conflictStrategy = 'latestWins'});
   final bool syncable;
@@ -447,9 +436,9 @@ class TypeInfo {
     this.abstractSchema = false,
     this.cacheable = false,
     this.embeddable = false,
-    this.generators = const GeneratorFlags(),
     this.sync = const SyncMeta(),
     this.manualImplementation = false,
+    this.extensions = const {},
   });
   final String name;
   final bool isEnum;
@@ -467,7 +456,11 @@ class TypeInfo {
   final bool abstractSchema;
   final bool cacheable;
   final bool embeddable;
-  final GeneratorFlags generators;
   final SyncMeta sync;
   final bool manualImplementation;
+
+  /// Generator opt-out flags keyed by generator id.
+  /// `extensions['drizzle'] == false` means Drizzle generation is suppressed.
+  /// Absence of a key means generate (default-on).
+  final Map<String, Object?> extensions;
 }

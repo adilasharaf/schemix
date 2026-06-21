@@ -32,6 +32,9 @@ final class _StubGraph implements TypeGraph {
     required String typeName,
     required String fromSourceAssetPath,
   }) => null;
+
+  @override
+  bool canImport(String typeName, String generatorId) => true;
 }
 
 String _jsonKey(FieldInfo f) => f.effectiveJsonName;

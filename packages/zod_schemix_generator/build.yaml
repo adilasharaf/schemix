@@ -3,12 +3,10 @@ builders:
     import: "package:zod_schemix_generator/builder.dart"
     builder_factories: ["zodBuilder"]
     build_extensions:
-      # This builder produces no files directly — it only registers the generator.
-      # The actual .g.ts files are written by schemix_builder's SchemixFileBuilder.
       "lib/$lib$": []
     auto_apply: dependents
     build_to: cache
     required_inputs:
-      - "lib/schemix_registry.json"
+      - "$package$lib/schemix_registry.json"
     runs_before:
       - "schemix_builder|schemix_file"

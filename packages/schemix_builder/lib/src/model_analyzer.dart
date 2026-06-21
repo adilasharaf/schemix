@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:schemix/models.dart';
+import 'package:schemix/schemix.dart';
 
 import 'annotation_validator.dart';
 import 'logger.dart';
@@ -111,7 +111,7 @@ class ModelAnalyzer {
     final useSnakeCase = hasManualSerialization && !hasJsonSerializable;
     final schemixAnn = _getAnnotation(element, 'Schemix');
 
-    final tableName = _stringField(schemixAnn, 'tableName');
+    final tableName = _stringField(schemixAnn, 'name');
     final collectionName = _stringField(schemixAnn, 'collectionName');
     final schemaVersion = _intField(schemixAnn, 'schemaVersion') ?? 1;
     final namespace = _stringField(schemixAnn, 'namespace');
@@ -132,19 +132,6 @@ class ModelAnalyzer {
       '  softDelete=$enableSoftDelete'
       '  abstract=$abstractSchema'
       '  embeddable=$embeddable',
-    );
-
-    final generators = GeneratorFlags(
-      zod: _boolField(schemixAnn, 'generateZod') ?? true,
-      drift: _boolField(schemixAnn, 'generateDrift') ?? false,
-      drizzle: _boolField(schemixAnn, 'generateDrizzle') ?? false,
-    );
-
-    _log.verbose(
-      '   generators   | ${element.name}'
-      '  zod=${generators.zod}'
-      '  drift=${generators.drift}'
-      '  drizzle=${generators.drizzle}',
     );
 
     final conflictAnn = _getAnnotation(element, 'ConflictResolver');
@@ -216,7 +203,7 @@ class ModelAnalyzer {
 
     // Extract primary constructor parameter names for serialization generators.
     final ctorParamNames = element.constructors
-        .where((ctor) => !ctor.isFactory && (ctor.name?.isEmpty ?? true))
+        .where((ctor) => !ctor.isFactory && ((ctor.name?.isEmpty ?? true) || ctor.name == 'new'))
         .expand((ctor) => ctor.formalParameters)
         .map((p) => p.name)
         .toSet();
@@ -244,11 +231,11 @@ class ModelAnalyzer {
       cacheable: cacheable,
       syncable: syncable,
       embeddable: embeddable,
-      generators: generators,
       sync: syncMeta,
       manualImplementation: manualImpl,
       compositeIndexes: compositeIndexes,
       ctorParamNames: ctorParamNames.whereType<String>().toSet(),
+      extensions: _buildClassExtensions(element),
     );
 
     AnnotationValidator.validate(classInfo, element);
@@ -835,5 +822,17 @@ class ModelAnalyzer {
     } catch (_) {
       return null;
     }
+  }
+
+  Map<String, Object?> _buildClassExtensions(ClassElement element) {
+    final map = <String, Object?>{};
+    for (final reg in GeneratorRegistry.registrations) {
+      final skip = reg.skipAnnotation;
+      if (skip == null) continue;
+      if (_hasAnnotation(element, skip)) {
+        map[reg.generator.id] = false;
+      }
+    }
+    return map.isEmpty ? const {} : Map.unmodifiable(map);
   }
 }

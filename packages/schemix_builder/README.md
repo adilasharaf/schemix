@@ -41,7 +41,6 @@ dart run build_runner build
 // lib/user.dart
 import 'package:schemix/schemix.dart';
 
-@Schemix(tableName: 'users', generateDrift: true, generateZod: true)
 class User {
   @PrimaryKey(autoGenerate: true)
   final String id;
@@ -114,7 +113,7 @@ targets:
         enabled: true
       schemix_builder|schemix_index:
         options:
-          package_name: "my_app"   # used in barrel file usage comment
+          package_name: "my_app" # used in barrel file usage comment
 ```
 
 The `package_name` option controls the import path shown in the barrel file header comment. It defaults to `"schemix"`.
@@ -123,11 +122,11 @@ The `package_name` option controls the import path shown in the barrel file head
 
 ## What Gets Generated
 
-| Builder       | Trigger                                  | Output                          |
-| ------------- | ---------------------------------------- | ------------------------------- |
-| `schemix_scan`  | Any `lib/**.dart` file in the package    | `lib/schemix_registry.json`     |
-| `schemix_file`  | Each `lib/{name}.dart` (non-generated)   | `.schemix.dart`, `.table.dart`, `.g.ts`, `.drizzle.ts` |
-| `schemix_index` | Package-level trigger (runs once)        | `gen/schemix.g.ts`              |
+| Builder         | Trigger                                | Output                                                 |
+| --------------- | -------------------------------------- | ------------------------------------------------------ |
+| `schemix_scan`  | Any `lib/**.dart` file in the package  | `lib/schemix_registry.json`                            |
+| `schemix_file`  | Each `lib/{name}.dart` (non-generated) | `.schemix.dart`, `.table.dart`, `.g.ts`, `.drizzle.ts` |
+| `schemix_index` | Package-level trigger (runs once)      | `gen/schemix.g.ts`                                     |
 
 The file builder dispatches to generators by `id`. If no generator is registered for an output slot (e.g. no `drift_schemix_generator` in `dev_dependencies`), that output file is silently skipped.
 
@@ -135,14 +134,14 @@ The file builder dispatches to generators by `id`. If no generator is registered
 
 ## What Gets Skipped
 
-| Condition                                           | Reason                                     |
-| --------------------------------------------------- | ------------------------------------------ |
-| File path ends with a generated suffix              | Avoids re-processing generated outputs     |
-| File cannot be read by `buildStep`                  | Asset may not exist at build time          |
-| `lib/schemix_registry.json` missing                 | Scan phase has not run yet                 |
-| Library source URI does not match the input asset   | Part files are processed by their owner    |
-| No `@Schemix`-annotated or enum classes found       | No-op; no output files written             |
-| Generator produces empty output for all classes     | Output file is not written                 |
+| Condition                                         | Reason                                  |
+| ------------------------------------------------- | --------------------------------------- |
+| File path ends with a generated suffix            | Avoids re-processing generated outputs  |
+| File cannot be read by `buildStep`                | Asset may not exist at build time       |
+| `lib/schemix_registry.json` missing               | Scan phase has not run yet              |
+| Library source URI does not match the input asset | Part files are processed by their owner |
+| No `@Schemix`-annotated or enum classes found     | No-op; no output files written          |
+| Generator produces empty output for all classes   | Output file is not written              |
 
 ---
 

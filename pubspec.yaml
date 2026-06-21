@@ -21,6 +21,8 @@ workspace:
   - packages/drizzle_schemix_generator
   - packages/zod_schemix_generator
   - packages/ts_schemix_generator
+  - packages/gorm_schemix_generator
+  - packages/go_serializable_schemix_generator
 
   # Future generators
   # - packages/openapi_schemix_generator
@@ -31,13 +33,18 @@ workspace:
 
   # Examples
   # - examples/basic
-  # - examples/full_stack
+  - example
 
   # Internal tools
   # - tools/schemix_cli
 
 dev_dependencies:
   melos: ^7.5.1
+
+  glob: any
+  yaml: any
+  path: any
+  lints: any
 
 melos:
   repository: https://github.com/adilasharaf/schemix
@@ -79,17 +86,13 @@ melos:
         concurrency: 2
 
     test:
-      description: Run tests
-      run: dart test
-      exec:
-        concurrency: 4
+      run: melos exec --concurrency 4 -- "dart test"
       packageFilters:
-        dirExists:
-          - test
+        dir-exists: tests
 
     gen:
       description: Run build_runner in generator packages
-      run: dart run build_runner build --delete-conflicting-outputs
+      run: dart run build_runner build
       exec:
         concurrency: 1
         failFast: true
@@ -98,7 +101,7 @@ melos:
 
     gen:watch:
       description: Watch generators
-      run: dart run build_runner watch --delete-conflicting-outputs
+      run: dart run build_runner watch
       exec:
         concurrency: 1
       packageFilters:
@@ -144,3 +147,73 @@ melos:
         melos run analyze &&
         melos run gen &&
         melos run test
+
+    # ─── Toolkit (AI / LLM helpers) ───────────────────────────────────────────
+    toolkit:summary:
+      description: |
+        Generate a full monorepo summary for AI/LLM ingestion.
+        Usage:
+          melos run toolkit:summary
+      run: dart scripts/toolkit.dart summary
+
+    toolkit:files:
+      description: |
+        Extract specific files from all packages.
+        Usage:
+          melos run toolkit:files -- pubspec.yaml
+          melos run toolkit:files -- "pubspec.yaml,analysis_options.yaml"
+          melos run toolkit:files -- "*_repository.dart"
+      run: dart scripts/toolkit.dart files
+
+    toolkit:folder:
+      description: |
+        Deep-dive into a specific folder (tree + line counts + all source files).
+        Usage:
+          melos run toolkit:folder -- packages/core/lib/src
+          melos run toolkit:folder -- apps/mobile/lib/features/auth
+      run: dart scripts/toolkit.dart folder
+
+    toolkit:structure:
+      description: |
+        Directory tree of all packages, or one specific package/folder.
+        Usage:
+          melos run toolkit:structure
+          melos run toolkit:structure -- packages/core
+      run: dart scripts/toolkit.dart structure
+
+    toolkit:deps:
+      description: "Compact dep overview — Melos graph + dependency sections from every pubspec.yaml."
+      run: dart scripts/toolkit.dart deps
+
+    toolkit:search:
+      description: |
+        Search a text or regex pattern across every source file in every package.
+        Usage:
+          melos run toolkit:search -- Riverpod
+          melos run toolkit:search -- "class.*Repository"
+      run: dart scripts/toolkit.dart search
+
+    toolkit:stats:
+      description: "Code size table — Dart file count, total lines, blank lines per package."
+      run: dart scripts/toolkit.dart stats
+
+    toolkit:changes:
+      description: |
+        Git-based report of recently modified source files. Defaults to last 7 days.
+        Usage:
+          melos run toolkit:changes
+          melos run toolkit:changes -- 14
+      run: dart scripts/toolkit.dart changes
+
+    toolkit:folder:all:
+      run: |
+        melos exec -- '
+          cd "$MELOS_ROOT_PATH"
+          RELATIVE_PATH=$(realpath --relative-to="$MELOS_ROOT_PATH" "$MELOS_PACKAGE_PATH")
+          melos run toolkit:folder "$RELATIVE_PATH"
+        '
+      description: "Run toolkit:folder create code summary for all"
+      select-package:
+        scope:
+          - "*schemix*"
+          - "example"

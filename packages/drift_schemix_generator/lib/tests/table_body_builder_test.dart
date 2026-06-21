@@ -20,7 +20,6 @@ ClassInfo _cls({
   ownFields: fields,
   enableTimestamps: enableTimestamps,
   enableSoftDelete: enableSoftDelete,
-  generators: const GeneratorFlags(drift: true),
 );
 
 void main() {

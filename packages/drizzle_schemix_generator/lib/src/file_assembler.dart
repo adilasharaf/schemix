@@ -79,8 +79,8 @@ final class DrizzleFileAssembler {
     for (final cls in models) {
       final v = tableVarName(cls.name);
       lines
-        ..add('export type ${cls.name} = typeof $v.\$inferSelect;')
-        ..add('export type New${cls.name} = typeof $v.\$inferInsert;');
+        ..add('export type ${cls.name}Row = typeof $v.\$inferSelect;')
+        ..add('export type New${cls.name}Row = typeof $v.\$inferInsert;');
     }
 
     return '${lines.join('\n')}\n';
@@ -90,6 +90,6 @@ final class DrizzleFileAssembler {
 
   List<String> _enumBlock(ClassInfo enumCls) => [
     "export const ${enumCls.name.camelCase}Values = [${enumCls.enumValues.map((v) => "'$v'").join(', ')}] as const;",
-    "export type ${enumCls.name} = typeof ${enumCls.name.camelCase}Values[number];",
+    "export type ${enumCls.name}Enum = typeof ${enumCls.name.camelCase}Values[number];",
   ];
 }

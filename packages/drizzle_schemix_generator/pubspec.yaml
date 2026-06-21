@@ -2,7 +2,6 @@ name: drizzle_schemix_generator
 description: >
   Drizzle ORM schema generator for Schemix. Produces a Drizzle table schema,
   relation definitions, and TypeScript type exports for every
-  @Schemix-annotated model class with generateDrizzle: true.
 publish_to: none
 version: 0.1.0
 repository: https://github.com/adilasharaf/schemix
@@ -24,6 +23,8 @@ dependencies:
 
   # Builder APIs and build system integration
   build: ^4.0.6
+  path: ^1.9.1
+  glob: ^2.1.3
 
 dev_dependencies:
   # Execute builders during development

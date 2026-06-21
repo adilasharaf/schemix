@@ -34,16 +34,21 @@ final class DrizzleImportCollector {
             field.relation.relationFieldName == null;
 
         if (!isUnresolvableHasOne) {
+          final targetName = field.relation.targetTypeName!;
+
+          // Skip the import when the target type has drizzle generation
+          // disabled — no .drizzle.ts file will exist for it.
+          if (!_typeGraph.canImport(targetName, 'drizzle')) continue;
+
           final rel = _typeGraph.relativeDrizzleImportFor(
-            typeName: field.relation.targetTypeName!,
+            typeName: targetName,
             fromSourceAssetPath: assetPath,
           );
           if (rel != null) {
             crossFileImports
                 .putIfAbsent(rel, () => {})
-                .add(tableVarName(field.relation.targetTypeName!));
+                .add(tableVarName(targetName));
           }
-          // If rel == null, the target is in the same file — no import needed.
         }
       }
 

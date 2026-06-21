@@ -3,9 +3,23 @@ builders:
     import: "package:drift_schemix_generator/builder.dart"
     builder_factories: ["driftBuilder"]
     build_extensions:
-      "^lib/{{}}.dart":
-        - "lib/{{}}.table.dart"
+      "lib/$lib$": []
+    auto_apply: dependents
+    build_to: cache
+    required_inputs:
+      - "$package$lib/schemix_registry.json"
+    runs_before:
+      - "schemix_builder|schemix_file"
+      - "drift_dev|drift_builder"
+
+  drift_barrel_builder:
+    import: "package:drift_schemix_generator/builder.dart"
+    builder_factories: ["driftBarrelBuilder"]
+    build_extensions:
+      "$package$": ["lib/tables.drift"]
     auto_apply: dependents
     build_to: source
     required_inputs:
       - "$package$lib/schemix_registry.json"
+    runs_before:
+      - "drift_dev|drift_builder"

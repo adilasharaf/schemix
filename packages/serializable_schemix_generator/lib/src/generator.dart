@@ -8,7 +8,7 @@ import 'from_json.dart';
 import 'header.dart';
 import 'to_json.dart';
 
-final class SerializableGenerator implements SchemixGenerator {
+final class SerializableGenerator extends SchemixGenerator {
   static final _log = const SchemixLogger('serializable');
 
   @override
@@ -19,7 +19,10 @@ final class SerializableGenerator implements SchemixGenerator {
 
   @override
   bool shouldRun(ClassInfo classInfo) =>
-      classInfo.hasSchemix && !classInfo.isEnum && !classInfo.abstractSchema;
+      classInfo.hasSchemix &&
+      !classInfo.isEnum &&
+      !classInfo.abstractSchema &&
+      classInfo.extensions['serializable'] != false;
 
   @override
   GeneratorOutput generate(ClassInfo classInfo, GeneratorContext context) {
@@ -43,6 +46,12 @@ final class SerializableGenerator implements SchemixGenerator {
   }
 
   String _jsonKey(FieldInfo field) => field.effectiveJsonName;
+
+  @override
+  String? generateForFile(List<ClassInfo> classes, GeneratorContext context) {
+    final result = assembleFile(classes, context.sourceAssetPath, context);
+    return result.isEmpty ? null : result;
+  }
 }
 
 /// Assembles the full `.schemix.dart` part file from per-class [GeneratorOutput]s.

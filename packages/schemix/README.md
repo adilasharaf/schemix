@@ -67,8 +67,6 @@ import 'package:schemix/schemix.dart';
   tableName: 'users',
   schemaVersion: 1,
   enableTimestamps: true,
-  generateZod: true,
-  generateDrift: true,
 )
 class User {
   @PrimaryKey(autoGenerate: true)
@@ -128,9 +126,6 @@ The root annotation. Every class that should produce generated output must carry
   namespace: 'billing',
   enableTimestamps: true,
   enableSoftDelete: true,
-  generateZod: true,
-  generateDrift: true,
-  generateDrizzle: false,
 )
 class Business { ... }
 ```
@@ -1470,8 +1465,6 @@ import 'package:schemix/schemix.dart';
   tableName: 'users',
   schemaVersion: 1,
   enableTimestamps: true,
-  generateZod: true,
-  generateDrift: true,
 )
 class User {
   @PrimaryKey(autoGenerate: true)
@@ -1531,9 +1524,6 @@ The root annotation. Every class that should produce generated output must carry
   namespace: 'billing',
   enableTimestamps: true,
   enableSoftDelete: true,
-  generateZod: true,
-  generateDrift: true,
-  generateDrizzle: false,
 )
 class Business { ... }
 ```

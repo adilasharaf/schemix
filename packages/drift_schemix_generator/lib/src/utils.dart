@@ -28,5 +28,5 @@ extension DriftStringExtension on String {
   ///   'UserStatus'   → '_userStatusConverter'
   ///   'OrderKind'    → '_orderKindConverter'
   String get converterName =>
-      '_${substring(0, 1).toLowerCase()}${substring(1)}Converter';
+      '\$${substring(0, 1).toLowerCase()}${substring(1)}Converter';
 }

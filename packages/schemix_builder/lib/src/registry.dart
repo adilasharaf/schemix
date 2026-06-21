@@ -123,6 +123,14 @@ class CrossFileRegistry implements TypeGraph {
     return _relativePath(from: from, to: to);
   }
 
+  @override
+  bool canImport(String typeName, String generatorId) {
+    final target = _types[typeName];
+    if (target == null) return false;
+    if (target.manualImplementation) return false;
+    return target.extensions[generatorId] != false;
+  }
+
   // ── Convenience accessors used by builders ─────────────────────────────────
 
   Iterable<TypeInfo> get allModels => _types.values.where((t) => !t.isEnum);
@@ -253,16 +261,12 @@ class CrossFileRegistry implements TypeGraph {
     'abstractSchema': t.abstractSchema,
     'cacheable': t.cacheable,
     'embeddable': t.embeddable,
-    'generators': {
-      'zod': t.generators.zod,
-      'drift': t.generators.drift,
-      'drizzle': t.generators.drizzle,
-    },
     'sync': {
       'syncable': t.sync.syncable,
       'conflictStrategy': t.sync.conflictStrategy,
     },
     'manualImplementation': t.manualImplementation,
+    if (t.extensions.isNotEmpty) 'extensions': t.extensions,
   };
 
   static TypeInfo _typeInfoFromJson(Map<String, dynamic> j) => TypeInfo(
@@ -282,17 +286,17 @@ class CrossFileRegistry implements TypeGraph {
     abstractSchema: j['abstractSchema'] as bool? ?? false,
     cacheable: j['cacheable'] as bool? ?? false,
     embeddable: j['embeddable'] as bool? ?? false,
-    generators: GeneratorFlags(
-      zod: (j['generators'] as Map)['zod'] as bool? ?? true,
-      drift: (j['generators'] as Map)['drift'] as bool? ?? false,
-      drizzle: (j['generators'] as Map)['drizzle'] as bool? ?? false,
-    ),
     sync: SyncMeta(
       syncable: (j['sync'] as Map)['syncable'] as bool? ?? false,
       conflictStrategy:
           (j['sync'] as Map)['conflictStrategy'] as String? ?? 'latestWins',
     ),
     manualImplementation: j['manualImplementation'] as bool? ?? false,
+    extensions:
+        (j['extensions'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v as Object?),
+        ) ??
+        const {},
   );
 
   static Map<String, dynamic> _relationInfoToJson(RelationInfo r) => {

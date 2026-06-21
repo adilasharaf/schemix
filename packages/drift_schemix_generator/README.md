@@ -1,7 +1,5 @@
 # drift_schemix_generator
 
-A [Schemix](https://github.com/adilasharaf/schemix) generator that produces a Drift `Table` subclass for every `@Schemix`-annotated model class that has `generateDrift: true`.
-
 ---
 
 ## Installation
@@ -28,7 +26,6 @@ import 'package:schemix/schemix.dart';
   tableName: 'users',
   enableTimestamps: true,
   enableSoftDelete: true,
-  generateDrift: true,
 )
 class User {
   @PrimaryKey(autoGenerate: true)
@@ -129,12 +126,11 @@ The `models_package` option controls the import in the generated file header. It
 
 ### Classes
 
-| Condition                                                          |
-| ------------------------------------------------------------------ |
-| `generators.drift == false` (`generateDrift: false` in `@Schemix`) |
-| `abstractSchema == true`                                           |
-| `embeddable == true`                                               |
-| `isEnum == true`                                                   |
+| Condition                |
+| ------------------------ |
+| `abstractSchema == true` |
+| `embeddable == true`     |
+| `isEnum == true`         |
 
 ---
 

@@ -126,6 +126,12 @@ final class _SchemixScanBuilder implements Builder {
         }
       }
 
+      // Build the generator extensions map from registered skip annotations.
+      // For each registered generator that declares a skip annotation, check
+      // whether this class carries that annotation. If it does, set the
+      // generator's id to false (suppressed). Otherwise leave absent (default-on).
+      final generatorExtensions = _buildGeneratorExtensions(c);
+
       _log.registeredClass(
         c.name!,
         assetPath,
@@ -152,17 +158,13 @@ final class _SchemixScanBuilder implements Builder {
           abstractSchema: _boolField(schemixAnn, 'abstractSchema'),
           cacheable: _boolField(schemixAnn, 'cacheable'),
           embeddable: _boolField(schemixAnn, 'embeddable'),
-          generators: GeneratorFlags(
-            zod: _boolField(schemixAnn, 'generateZod'),
-            drift: _boolField(schemixAnn, 'generateDrift'),
-            drizzle: _boolField(schemixAnn, 'generateDrizzle'),
-          ),
           sync: SyncMeta(
             syncable: _boolField(schemixAnn, 'syncable'),
             conflictStrategy:
                 _stringField(conflictAnn, 'strategy') ?? 'latestWins',
           ),
           manualImplementation: _hasAnnotationNamed(c, 'ManualImplementation'),
+          extensions: generatorExtensions,
         ),
       );
 
@@ -171,6 +173,26 @@ final class _SchemixScanBuilder implements Builder {
         _registerRelations(registry, c.name!, field);
       }
     }
+  }
+
+  // ── Generator extensions ──────────────────────────────────────────────────
+
+  /// Builds the generator-flag extensions map for [element].
+  ///
+  /// Iterates every [GeneratorRegistration] that has a [skipAnnotation].
+  /// When the class carries that annotation, records `id → false`.
+  /// Registrations without a skip annotation are not recorded (absence = run).
+  static Map<String, Object?> _buildGeneratorExtensions(ClassElement element) {
+    final map = <String, Object?>{};
+    for (final reg in GeneratorRegistry.registrations) {
+      final skip = reg.skipAnnotation;
+      if (skip == null) continue;
+      if (_hasAnnotationNamed(element, skip)) {
+        map[reg.generator.id] = false;
+        continue;
+      }
+    }
+    return map.isEmpty ? const {} : Map.unmodifiable(map);
   }
 
   // ── Relation registration ─────────────────────────────────────────────────

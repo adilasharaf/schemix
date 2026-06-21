@@ -18,7 +18,7 @@ import 'utils.dart';
 /// - `ClassInfo.generators.drift` is `true`
 /// - `ClassInfo.abstractSchema` is `false`
 /// - `ClassInfo.embeddable` is `false`
-final class DriftGenerator implements SchemixGenerator {
+final class DriftGenerator extends SchemixGenerator {
   /// Constructs the generator with a shared [DriftColumnBuilder] instance
   /// passed into both sub-builders so all column dispatch goes through one
   /// object (consistent skip logic, easy to swap in tests).
@@ -132,13 +132,13 @@ final class DriftGenerator implements SchemixGenerator {
 
   bool _shouldGenerate(ClassInfo cls) =>
       !cls.isEnum &&
-      cls.generators.drift &&
+      cls.extensions['drift'] != false &&
       !cls.abstractSchema &&
       !cls.embeddable;
 
   String _skipReason(ClassInfo cls) {
     if (cls.isEnum) return 'enum';
-    if (!cls.generators.drift) return 'drift disabled';
+    if (cls.extensions['drift'] == false) return 'drift disabled';
     if (cls.abstractSchema) return 'abstract schema';
     if (cls.embeddable) return 'embeddable';
     return 'unknown';

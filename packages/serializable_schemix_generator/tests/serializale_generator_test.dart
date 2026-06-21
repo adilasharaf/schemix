@@ -34,6 +34,9 @@ final class _StubGraph implements TypeGraph {
     required String typeName,
     required String fromSourceAssetPath,
   }) => null;
+
+  @override
+  bool canImport(String typeName, String generatorId) => true;
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -156,6 +159,47 @@ void main() {
     test('id field uses named ctor arg', () {
       final src = output.outputs['.schemix.dart']!;
       expect(src, contains("id: json['id']"));
+    });
+  });
+
+  group('SerializableGenerator.shouldRun', () {
+    test('runs when hasSchemix and no skip extension', () {
+      const cls = ClassInfo(
+        name: 'User',
+        assetPath: 'lib/user.dart',
+        hasSchemix: true,
+      );
+      expect(SerializableGenerator().shouldRun(cls), isTrue);
+    });
+
+    test('suppressed when extensions[serializable] == false', () {
+      final cls = const ClassInfo(
+        name: 'Internal',
+        assetPath: 'lib/internal.dart',
+        hasSchemix: true,
+        extensions: {'serializable': false},
+      );
+      expect(SerializableGenerator().shouldRun(cls), isFalse);
+    });
+
+    test('skipped for enum regardless of extensions', () {
+      const cls = ClassInfo(
+        name: 'Status',
+        assetPath: 'lib/status.dart',
+        hasSchemix: true,
+        isEnum: true,
+      );
+      expect(SerializableGenerator().shouldRun(cls), isFalse);
+    });
+
+    test('skipped for abstractSchema regardless of extensions', () {
+      const cls = ClassInfo(
+        name: 'BaseModel',
+        assetPath: 'lib/base.dart',
+        hasSchemix: true,
+        abstractSchema: true,
+      );
+      expect(SerializableGenerator().shouldRun(cls), isFalse);
     });
   });
 }

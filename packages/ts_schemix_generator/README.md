@@ -157,11 +157,10 @@ The `import { z } from 'zod'` line is only included when at least one enum is pr
 
 ### Classes
 
-| Condition                                                      |
-| -------------------------------------------------------------- |
-| `generators.zod == false` (`generateZod: false` in `@Schemix`) |
-| `manualImplementation == true` (`@ManualImplementation`)       |
-| `hasSchemix == false` and `isEnum == false`                    |
+| Condition                                                |
+| -------------------------------------------------------- |
+| `manualImplementation == true` (`@ManualImplementation`) |
+| `hasSchemix == false` and `isEnum == false`              |
 
 ---
 

@@ -2,25 +2,28 @@
 // 1. SCHEMA-LEVEL
 // ════════════════════════════════════════════════════════════════════════════
 
-/// Marks a Dart class as a schemix schema model and controls which generators
-/// are active for it.
+/// Marks a Dart class as a Schemix schema model.
+///
+/// Controls structural schema options only — table name, versioning,
+/// timestamps, soft-delete, and similar schema-level concerns.
+///
+/// Generator opt-out is handled by each generator's own annotation
+/// (e.g. `@NoSerializable()`, `@NoDrizzle()`), not here. All registered
+/// generators run by default; annotate the class with the generator's
+/// skip annotation to suppress a specific output.
 ///
 /// Example:
 /// ```dart
-/// @Schemix(
-///   tableName: 'users',
-///   schemaVersion: 1,
-///   enableTimestamps: true,
-///   generateZod: true,
-///   generateDrift: true,
-///   generateDrizzle: true,
-/// )
+/// @Schemix(tableName: 'users', enableTimestamps: true)
 /// class User { ... }
+///
+/// @Schemix()
+/// @NoDrizzle()       // suppress Drizzle output for this class only
+/// class InternalEvent { ... }
 /// ```
 class Schemix {
   const Schemix({
-    this.tableName,
-    this.collectionName,
+    this.name,
     this.schemaVersion = 1,
     this.namespace,
     this.enableTimestamps = true,
@@ -29,21 +32,15 @@ class Schemix {
     this.cacheable = true,
     this.syncable = true,
     this.embeddable = false,
-    this.generateZod = true,
-    this.generateDrift = true,
-    this.generateDrizzle = true,
   });
 
   /// SQL / Drift / Drizzle table name. Defaults to snake_case of class name.
-  final String? tableName;
-
-  /// Firestore collection name.
-  final String? collectionName;
+  final String? name;
 
   /// Monotonically increasing schema version used for migration tracking.
   final int schemaVersion;
 
-  /// Logical module or domain grouping (e.g. 'auth', 'billing').
+  /// Logical module or domain grouping (e.g. `'auth'`, `'billing'`).
   final String? namespace;
 
   /// When true, auto-injects `createdAt` and `updatedAt` columns if not
@@ -65,15 +62,6 @@ class Schemix {
 
   /// When true, the model is embedded inside a parent (no own table).
   final bool embeddable;
-
-  /// Emit a Zod schema + TypeScript interface (`gen/{path}.g.ts`).
-  final bool generateZod;
-
-  /// Emit a Drift Table class (`lib/{path}.table.dart`).
-  final bool generateDrift;
-
-  /// Emit a Drizzle ORM table schema (`gen/{path}.drizzle.ts`).
-  final bool generateDrizzle;
 }
 
 /// Groups a schema into a logical domain.
@@ -82,7 +70,7 @@ class Schemix {
 class SchemaGroup {
   const SchemaGroup(this.group);
 
-  /// The domain or module name (e.g. 'auth', 'billing').
+  /// The domain or module name (e.g. `'auth'`, `'billing'`).
   final String group;
 }
 
@@ -121,14 +109,26 @@ class DeprecatedSchema {
   final String? removalVersion;
 }
 
+/// Opts this class out of automatic code generation. The developer is
+/// responsible for providing the generated output by hand.
+class ManualImplementation {
+  const ManualImplementation();
+}
+
 // ════════════════════════════════════════════════════════════════════════════
-// 2. FIELD-LEVEL
+// 2. FIELD METADATA
 // ════════════════════════════════════════════════════════════════════════════
 
-/// Rich field metadata. Controls visibility, searchability, and display hints
-/// across all generators.
+/// Rich field metadata. Controls visibility, searchability, and cross-generator
+/// display hints. All flags default to `false`; set only what applies.
 ///
 /// Also available as the typedef `@AppField`.
+///
+/// Example:
+/// ```dart
+/// @SchemixField(searchable: true, sortable: true, displayName: 'Full Name')
+/// final String fullName;
+/// ```
 class SchemixField {
   const SchemixField({
     this.immutable = false,
@@ -202,12 +202,29 @@ class SchemixField {
   final String? placeholder;
 }
 
-/// Alias for [@SchemixField].
+/// Alias for [SchemixField].
 typedef AppField = SchemixField;
 
-/// Marks a field as the primary key of the model.
+// ════════════════════════════════════════════════════════════════════════════
+// 3. PRIMARY KEY & DATABASE
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Marks the primary key field of a model.
 ///
-/// Example: `@PrimaryKey(autoGenerate: true)`
+/// For `String` PKs, `autoGenerate: true` emits a UUID v4 client-side default.
+/// For `int` PKs, it maps to `SERIAL` / `AUTOINCREMENT`.
+///
+/// Example:
+/// ```dart
+/// @PrimaryKey(autoGenerate: true)
+/// final String id;
+///
+/// // Composite PK
+/// @PrimaryKey(compositeOrder: 1)
+/// final String tenantId;
+/// @PrimaryKey(compositeOrder: 2)
+/// final String userId;
+/// ```
 class PrimaryKey {
   const PrimaryKey({
     this.autoGenerate = true,
@@ -215,24 +232,26 @@ class PrimaryKey {
     this.clustered = false,
   });
 
-  /// When true, the database or ORM generates the value automatically
-  /// (UUID for String PKs, SERIAL for int PKs).
+  /// When true, the database or ORM generates the value automatically.
   final bool autoGenerate;
 
-  /// Position of this field within a composite primary key (1-based).
+  /// Position within a composite primary key (1-based).
   final int? compositeOrder;
 
-  /// Whether this PK column is the clustered index (SQL Server / MySQL).
+  /// Whether this PK column is the clustered index.
   final bool clustered;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// 3. DATABASE
-// ════════════════════════════════════════════════════════════════════════════
-
 /// Creates a database index on the annotated field.
 ///
-/// Example: `@Indexed(unique: true)`
+/// Example:
+/// ```dart
+/// @Indexed(unique: true)
+/// final String email;
+///
+/// @Indexed(fullText: true)
+/// final String description;
+/// ```
 class Indexed {
   const Indexed({
     this.name,
@@ -260,7 +279,12 @@ class Indexed {
 
 /// Creates a multi-field composite index. Applied at class level.
 ///
-/// Example: `@CompositeIndex(fields: ['email', 'tenantId'], unique: true)`
+/// Example:
+/// ```dart
+/// @CompositeIndex(fields: ['email', 'tenantId'], unique: true)
+/// @Schemix()
+/// class User { ... }
+/// ```
 class CompositeIndex {
   const CompositeIndex({
     required this.fields,
@@ -271,7 +295,7 @@ class CompositeIndex {
   /// Ordered list of field names that form the composite index.
   final List<String> fields;
 
-  /// Index enforces uniqueness across all rows for the combined columns.
+  /// Index enforces uniqueness across the combined columns.
   final bool unique;
 
   /// Per-field sort directions; must match [fields] length if provided.
@@ -279,11 +303,14 @@ class CompositeIndex {
 }
 
 /// Shorthand uniqueness constraint. Equivalent to `@Indexed(unique: true)`.
+///
+/// Example: `@Unique() final String slug;`
 class Unique {
   const Unique();
 }
 
-/// Marks an integer PK field as auto-increment (SERIAL / AUTOINCREMENT).
+/// Marks an `int` PK field as auto-increment (`SERIAL` / `AUTOINCREMENT`).
+/// Use alongside `@PrimaryKey`.
 class AutoIncrement {
   const AutoIncrement();
 }
@@ -330,7 +357,11 @@ class DriftType {
 
 /// Sets a database-level default value for this field.
 ///
-/// Example: `@DatabaseDefault(UserStatus.active)`
+/// Example:
+/// ```dart
+/// @DatabaseDefault(PostStatus.draft)
+/// final PostStatus status;
+/// ```
 class DatabaseDefault {
   const DatabaseDefault(this.value);
 
@@ -384,7 +415,11 @@ class CachedField {
 
 /// Many-to-one relation. The annotated field stores the foreign-key ID.
 ///
-/// Example: `@BelongsTo(User)`
+/// Example:
+/// ```dart
+/// @BelongsTo(User)
+/// final String userId;
+/// ```
 class BelongsTo {
   const BelongsTo(this.target, {this.foreignKey});
 
@@ -425,7 +460,11 @@ class HasMany {
 
 /// Many-to-many relation via a junction table. No column is emitted.
 ///
-/// Example: `@ManyToMany(Tag, junctionTable: 'business_tags')`
+/// Example:
+/// ```dart
+/// @ManyToMany(Tag, junctionTable: 'post_tags')
+/// final List<Tag> tags;
+/// ```
 class ManyToMany {
   const ManyToMany(this.target, {this.junctionTable, this.relationName});
 
@@ -448,7 +487,11 @@ class Embedded {
 
 /// Marks a field as the FK column backing a relation field on this class.
 ///
-/// [fieldName] is the name of the owning relation field on this class.
+/// Example:
+/// ```dart
+/// @RelationField(fieldName: 'user')
+/// final String userId;
+/// ```
 class RelationField {
   const RelationField({this.fieldName});
 
@@ -470,8 +513,8 @@ class LazyRelation {
 // 5. VALIDATION
 // ════════════════════════════════════════════════════════════════════════════
 
-/// Field must be present and non-null. Emits `.nonEmpty()` or `.min(1)` in Zod
-/// depending on the field type.
+/// Field must be present and non-null / non-empty.
+/// Emits `.nonEmpty()` or `.min(1)` in Zod depending on the field type.
 class Required {
   const Required();
 }
@@ -498,7 +541,11 @@ class Max {
 
 /// String length constraint. Emits `.min(min).max(max)` in Zod.
 ///
-/// Example: `@Length(min: 3, max: 150)`
+/// Example:
+/// ```dart
+/// @Length(min: 1, max: 255)
+/// final String businessName;
+/// ```
 class Length {
   const Length({this.min, this.max});
 
@@ -594,7 +641,6 @@ class JsonField {
 }
 
 /// Excludes this field from all serialization and code generation outputs.
-/// Equivalent to `@JsonKey(ignore: true)`.
 class IgnoreField {
   const IgnoreField();
 }
@@ -604,7 +650,7 @@ class ReadOnlyField {
   const ReadOnlyField();
 }
 
-/// Field is accepted on writes (create/update) but excluded from responses.
+/// Field is accepted on writes (create / update) but excluded from responses.
 class WriteOnlyField {
   const WriteOnlyField();
 }
@@ -681,12 +727,12 @@ class ZodType {
   final String schema;
 }
 
-/// Unified type override that spans multiple generation targets.
+/// Unified type override spanning multiple generation targets.
 ///
 /// Example:
 /// ```dart
 /// @CustomConverter(
-///   dartConverter: MetadataConverter,
+///   dartConverter: 'MetadataConverter',
 ///   tsConverter: "z.record(z.string(), z.unknown())",
 ///   sqlType: 'JSONB',
 ///   drizzleType: 'jsonb',
@@ -715,7 +761,7 @@ class CustomConverter {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// 8. PLATFORM-SPECIFIC
+// 8. PLATFORM-SPECIFIC EXCLUSIONS
 // ════════════════════════════════════════════════════════════════════════════
 
 /// Excludes this field from the Drift table generator only.
@@ -791,10 +837,248 @@ class WriteScope {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// 10. UI METADATA
+// 10. LIFECYCLE
 // ════════════════════════════════════════════════════════════════════════════
 
-/// Display metadata for form and table UIs. Used by `generateForms: true`.
+/// Marks a `DateTime` field as the record creation timestamp.
+/// Auto-excluded from create/update API DTOs.
+class CreatedAt {
+  const CreatedAt();
+}
+
+/// Marks a `DateTime` field as the last-updated timestamp.
+/// Auto-excluded from create/update API DTOs.
+class UpdatedAt {
+  const UpdatedAt();
+}
+
+/// Marks a nullable `DateTime` field as the soft-delete timestamp.
+/// Used with `@Schemix(enableSoftDelete: true)`.
+/// Auto-excluded from create/update API DTOs.
+class DeletedAt {
+  const DeletedAt();
+}
+
+/// Marks an `int` field as an optimistic-concurrency version counter.
+/// Auto-excluded from create/update API DTOs.
+class VersionField {
+  const VersionField();
+}
+
+/// Marks a field as an audit-trail marker that tracks change history.
+class AuditField {
+  const AuditField();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 11. SYNC & OFFLINE
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Specifies how write conflicts should be resolved during sync.
+///
+/// Example: `@ConflictResolver(strategy: 'latestWins')`
+class ConflictResolver {
+  const ConflictResolver({required this.strategy});
+
+  /// Conflict resolution strategy: `'latestWins'`, `'firstWins'`, `'merge'`.
+  final String strategy;
+}
+
+/// Field exists only in the local database — never synced to the server.
+/// Excluded from Zod / TypeScript outputs.
+class OfflineOnly {
+  const OfflineOnly();
+}
+
+/// Field exists only in the remote/cloud database — not stored locally.
+/// Excluded from Drift / Drizzle table generation.
+class CloudOnly {
+  const CloudOnly();
+}
+
+/// Sets the sync priority for this field during conflict resolution.
+///
+/// Example: `@SyncPriority(priority: 10)`
+class SyncPriority {
+  const SyncPriority({required this.priority});
+
+  /// Higher values are synced first.
+  final int priority;
+}
+
+/// Marks a field so that every mutation is recorded as an operation log entry.
+class OperationTracked {
+  const OperationTracked();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 12. API
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Controls how this field appears in generated API DTO interfaces.
+///
+/// Example: `@ApiField(expose: true, readonly: true)`
+class ApiField {
+  const ApiField({
+    this.expose = true,
+    this.readonly = false,
+    this.deprecated = false,
+  });
+
+  /// When false, the field is excluded from all DTO interfaces.
+  final bool expose;
+
+  /// When true, the field appears in response DTOs but not in create/update DTOs.
+  final bool readonly;
+
+  /// Marks this field as deprecated in generated API documentation.
+  final bool deprecated;
+}
+
+/// Tracks the API version lifecycle of a field.
+///
+/// Example: `@ApiVersion(introducedIn: '1.2.0', deprecatedIn: '2.0.0')`
+class ApiVersion {
+  const ApiVersion({this.introducedIn, this.deprecatedIn, this.removedIn});
+
+  /// Semver string of the API version that introduced this field.
+  final String? introducedIn;
+
+  /// Semver string of the API version that deprecated this field.
+  final String? deprecatedIn;
+
+  /// Semver string of the API version that removed this field.
+  final String? removedIn;
+}
+
+/// Field is included in DTO interfaces only — not persisted to the database.
+class DtoOnly {
+  const DtoOnly();
+}
+
+/// Field is for internal server use only. Excluded from all public API DTOs.
+class InternalApi {
+  const InternalApi();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 13. AUDIT & TRACKING
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Records every mutation to this field in the audit log.
+class TrackChanges {
+  const TrackChanges();
+}
+
+/// Emits an analytics event whenever this field changes.
+///
+/// Example: `@TrackAnalytics(eventName: 'plan_changed')`
+class TrackAnalytics {
+  const TrackAnalytics({this.eventName});
+
+  /// Optional override for the analytics event name.
+  /// Defaults to a generated name based on the class and field name.
+  final String? eventName;
+}
+
+/// Logs every write to this field using the application's logging system.
+class LogChanges {
+  const LogChanges();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 14. MIGRATION
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Records that this field was renamed from [oldName] in a previous version.
+/// Used to generate compatible ALTER TABLE / migration scripts.
+///
+/// Example: `@RenamedFrom('company_name')`
+class RenamedFrom {
+  const RenamedFrom(this.oldName);
+
+  /// The previous field / column name.
+  final String oldName;
+}
+
+/// Marks a field as scheduled for removal in [version].
+/// Generators emit a deprecation warning.
+///
+/// Example: `@RemovedIn('3.0.0')`
+class RemovedIn {
+  const RemovedIn(this.version);
+
+  /// Semver string of the version in which this field will be removed.
+  final String version;
+}
+
+/// Attaches a free-form migration note to a field for documentation purposes.
+///
+/// Example: `@MigrationNote('Backfill from the legacy profile table.')`
+class MigrationNote {
+  const MigrationNote(this.note);
+
+  /// The migration note text.
+  final String note;
+}
+
+/// Marks a field as a legacy carry-over that exists only for backwards
+/// compatibility. Excluded from new code generation paths.
+class LegacyField {
+  const LegacyField();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 15. FEATURE & RELEASE CONTROL
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Gates this field behind a named feature flag.
+///
+/// Example: `@FeatureFlag('new_billing_flow')`
+class FeatureFlag {
+  const FeatureFlag(this.flag);
+
+  /// The feature-flag identifier checked at runtime.
+  final String flag;
+}
+
+/// Marks a field as experimental. Generated code includes a warning comment.
+class Experimental {
+  const Experimental();
+}
+
+/// Marks a field as available to enterprise-tier users only.
+class EnterpriseOnly {
+  const EnterpriseOnly();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 16. SLUG
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Marks a field as a URL-safe slug derived from another field's value.
+///
+/// Example:
+/// ```dart
+/// @SlugField(sourceField: 'businessName', separator: '-')
+/// @Indexed(unique: true)
+/// String slug;
+/// ```
+class SlugField {
+  const SlugField({this.sourceField, this.separator = '-'});
+
+  /// The field name whose value is used to generate the slug.
+  final String? sourceField;
+
+  /// Character used to join slug words (default: `'-'`).
+  final String separator;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 17. UI METADATA
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Display metadata for form and table UIs.
 ///
 /// Example:
 /// ```dart
@@ -833,9 +1117,9 @@ class UiField {
 /// Form widget metadata. Controls input type and behaviour.
 ///
 /// Widget type resolution priority (when [widgetType] is null):
-///   `@ColorField` → 'color' · `@ImageField` → 'image' · `@FileField` → 'file'
-///   `@Encrypted`/`@Hashed` → 'password' · `@Email` → 'email' · `@Url` → 'url'
-///   bool → 'boolean' · int/double → 'number' · DateTime → 'date' · else → 'text'
+///   `@ColorField` → `'color'` · `@ImageField` → `'image'` · `@FileField` → `'file'`
+///   `@Encrypted`/`@Hashed` → `'password'` · `@Email` → `'email'` · `@Url` → `'url'`
+///   `bool` → `'boolean'` · `int`/`double` → `'number'` · `DateTime` → `'date'` · else → `'text'`
 class FormField {
   const FormField({
     this.widgetType,
@@ -898,252 +1182,4 @@ class FilterField {
 /// Equivalent to setting `searchable: true` on `@SchemixField`.
 class SearchField {
   const SearchField();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 11. LIFECYCLE
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Marks a `DateTime` field as the record creation timestamp.
-/// Auto-excluded from create/update API DTOs.
-class CreatedAt {
-  const CreatedAt();
-}
-
-/// Marks a `DateTime` field as the last-updated timestamp.
-/// Auto-excluded from create/update API DTOs.
-class UpdatedAt {
-  const UpdatedAt();
-}
-
-/// Marks a nullable `DateTime` field as the soft-delete timestamp.
-/// Used with `@Schemix(enableSoftDelete: true)`.
-/// Auto-excluded from create/update API DTOs.
-class DeletedAt {
-  const DeletedAt();
-}
-
-/// Marks an `int` field as an optimistic-concurrency version counter.
-/// Auto-excluded from create/update API DTOs.
-class VersionField {
-  const VersionField();
-}
-
-/// Marks a field as an audit-trail marker that tracks change history.
-class AuditField {
-  const AuditField();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 12. SYNC & OFFLINE
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Specifies how write conflicts should be resolved during sync.
-///
-/// Example: `@ConflictResolver(strategy: 'latestWins')`
-class ConflictResolver {
-  const ConflictResolver({required this.strategy});
-
-  /// Conflict resolution strategy: `'latestWins'`, `'firstWins'`, `'merge'`.
-  final String strategy;
-}
-
-/// Field exists only in the local database — never synced to the server.
-/// Excluded from Zod / TypeScript outputs.
-class OfflineOnly {
-  const OfflineOnly();
-}
-
-/// Field exists only in the remote/cloud database — not stored locally.
-/// Excluded from Drift / Drizzle table generation.
-class CloudOnly {
-  const CloudOnly();
-}
-
-/// Sets the sync priority for this field during conflict resolution.
-///
-/// Example: `@SyncPriority(priority: 10)`
-class SyncPriority {
-  const SyncPriority({required this.priority});
-
-  /// Higher values are synced first.
-  final int priority;
-}
-
-/// Marks a field so that every mutation is recorded as an operation log entry.
-class OperationTracked {
-  const OperationTracked();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 13. API
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Controls how this field appears in generated API DTO interfaces.
-///
-/// Example: `@ApiField(expose: true, readonly: true)`
-class ApiField {
-  const ApiField({
-    this.expose = true,
-    this.readonly = false,
-    this.deprecated = false,
-  });
-
-  /// When false, the field is excluded from all DTO interfaces.
-  final bool expose;
-
-  /// When true, the field appears in response DTOs but not in create/update DTOs.
-  final bool readonly;
-
-  /// Marks this field as deprecated in generated API documentation.
-  final bool deprecated;
-}
-
-/// Tracks the API version lifecycle of a field.
-///
-/// Example: `@ApiVersion(introducedIn: '1.2.0', deprecatedIn: '2.0.0')`
-class ApiVersion {
-  const ApiVersion({this.introducedIn, this.deprecatedIn, this.removedIn});
-
-  /// Semver string of the API version that introduced this field.
-  final String? introducedIn;
-
-  /// Semver string of the API version that deprecated this field.
-  final String? deprecatedIn;
-
-  /// Semver string of the API version that removed this field.
-  final String? removedIn;
-}
-
-/// Field is included in DTO interfaces only — not persisted to the database.
-class DtoOnly {
-  const DtoOnly();
-}
-
-/// Field is for internal server use only. Excluded from all public API DTOs.
-class InternalApi {
-  const InternalApi();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 14. AUDIT & TRACKING
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Records every mutation to this field in the audit log.
-class TrackChanges {
-  const TrackChanges();
-}
-
-/// Emits an analytics event whenever this field changes.
-///
-/// Example: `@TrackAnalytics(eventName: 'plan_changed')`
-class TrackAnalytics {
-  const TrackAnalytics({this.eventName});
-
-  /// Optional override for the analytics event name.
-  /// Defaults to a generated name based on the class and field name.
-  final String? eventName;
-}
-
-/// Logs every write to this field using the application's logging system.
-class LogChanges {
-  const LogChanges();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 15. MIGRATION
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Records that this field was renamed from [oldName] in a previous version.
-/// Used to generate compatible ALTER TABLE / migration scripts.
-///
-/// Example: `@RenamedFrom('company_name')`
-class RenamedFrom {
-  const RenamedFrom(this.oldName);
-
-  /// The previous field / column name.
-  final String oldName;
-}
-
-/// Marks a field as scheduled for removal in [version].
-/// Generators emit a deprecation warning.
-///
-/// Example: `@RemovedIn('3.0.0')`
-class RemovedIn {
-  const RemovedIn(this.version);
-
-  /// Semver string of the version in which this field will be removed.
-  final String version;
-}
-
-/// Attaches a free-form migration note to a field for documentation purposes.
-///
-/// Example: `@MigrationNote('Backfill from the legacy profile table.')`
-class MigrationNote {
-  const MigrationNote(this.note);
-
-  /// The migration note text.
-  final String note;
-}
-
-/// Marks a field as a legacy carry-over that exists only for backwards
-/// compatibility. Excluded from new code generation paths.
-class LegacyField {
-  const LegacyField();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 16. FEATURE & RELEASE CONTROL
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Gates this field behind a named feature flag.
-///
-/// Example: `@FeatureFlag('new_billing_flow')`
-class FeatureFlag {
-  const FeatureFlag(this.flag);
-
-  /// The feature-flag identifier checked at runtime.
-  final String flag;
-}
-
-/// Marks a field as experimental. Generated code includes a warning comment.
-class Experimental {
-  const Experimental();
-}
-
-/// Marks a field as available to enterprise-tier users only.
-class EnterpriseOnly {
-  const EnterpriseOnly();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 17. SLUG
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Marks a field as a URL-safe slug derived from another field's value.
-///
-/// Example:
-/// ```dart
-/// @SlugField(sourceField: 'businessName', separator: '-')
-/// @Indexed(unique: true)
-/// String slug;
-/// ```
-class SlugField {
-  const SlugField({this.sourceField, this.separator = '-'});
-
-  /// The field name whose value is used to generate the slug.
-  final String? sourceField;
-
-  /// Character used to join slug words (default: `'-'`).
-  final String separator;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// 18. GENERATOR CONTROL
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Opts this class out of automatic code generation. The developer is
-/// responsible for providing the generated output by hand.
-class ManualImplementation {
-  const ManualImplementation();
 }

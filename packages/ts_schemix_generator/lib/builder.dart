@@ -1,6 +1,5 @@
 import 'package:build/build.dart';
 import 'package:schemix/schemix.dart';
-import 'package:schemix_builder/schemix_builder.dart';
 
 import 'src/generator.dart';
 
@@ -27,7 +26,7 @@ Builder tsBuilder(BuilderOptions options) {
 
 /// Lightweight adapter that implements [SchemixGenerator] without needing
 /// the [CrossFileRegistry] at registration time.
-final class _TsGeneratorAdapter implements SchemixGenerator {
+final class _TsGeneratorAdapter extends SchemixGenerator {
   @override
   String get id => 'ts';
 
@@ -37,7 +36,7 @@ final class _TsGeneratorAdapter implements SchemixGenerator {
   @override
   bool shouldRun(ClassInfo classInfo) =>
       (classInfo.isEnum ||
-          (classInfo.generators.zod && classInfo.hasSchemix)) &&
+          (classInfo.extensions['zod'] != false && classInfo.hasSchemix)) &&
       !classInfo.manualImplementation;
 
   @override

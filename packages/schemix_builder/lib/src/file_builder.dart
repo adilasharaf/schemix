@@ -11,23 +11,109 @@ import 'registry.dart';
 Builder schemixFileBuilder(BuilderOptions options) =>
     _SchemixFileBuilder(options);
 
+// ── Options helpers ───────────────────────────────────────────────────────────
+
+/// Reads output path configuration from [BuilderOptions].
+///
+/// All values have defaults that reproduce the original hardcoded behaviour.
+/// Override any of these in the consuming package's `build.yaml`:
+///
+/// ```yaml
+/// targets:
+///   $default:
+///     builders:
+///       schemix_builder|schemix_file:
+///         options:
+///           serializable_dir: "lib"
+///           serializable_suffix: ".schemix"
+///           drift_dir: "lib"
+///           drift_suffix: ".table"
+///           ts_dir: "gen"
+///           zod_suffix: ".g"
+///           drizzle_suffix: ".drizzle"
+/// ```
+final class _OutputPaths {
+  _OutputPaths.fromOptions(BuilderOptions options)
+    : serializableDir = options.config['serializable_dir'] as String? ?? 'lib',
+      serializableSuffix =
+          options.config['serializable_suffix'] as String? ?? '.schemix',
+      driftDir = options.config['drift_dir'] as String? ?? 'lib',
+      driftSuffix = options.config['drift_suffix'] as String? ?? '.table',
+      tsDir = options.config['ts_dir'] as String? ?? 'gen',
+      goDir = options.config['go_dir'] as String? ?? 'gen',
+      zodSuffix = options.config['zod_suffix'] as String? ?? '.g',
+      drizzleSuffix = options.config['drizzle_suffix'] as String? ?? '.drizzle';
+
+  final String serializableDir;
+  final String serializableSuffix;
+  final String driftDir;
+  final String driftSuffix;
+  final String tsDir;
+  final String goDir;
+  final String zodSuffix;
+  final String drizzleSuffix;
+
+  /// Returns the four output paths for a given input stem.
+  ///
+  /// [stem] is the part of the input path captured by `{{}}` in the
+  /// build_extensions pattern — e.g. `models/user` for `lib/models/user.dart`.
+  List<String> outputsFor(String stem) => [
+    '$serializableDir/$stem$serializableSuffix.dart',
+    '$driftDir/$stem$driftSuffix.dart',
+    '$tsDir/$stem$zodSuffix.ts',
+    '$tsDir/$stem$drizzleSuffix.ts',
+  ];
+
+  /// The `buildExtensions` map declared to `build_runner`.
+  Map<String, List<String>> get buildExtensions => {
+    r'^lib/{{}}.dart': [
+      '$serializableDir/{{}}'
+          '$serializableSuffix.dart',
+      '$driftDir/{{}}'
+          '$driftSuffix.dart',
+      '$tsDir/{{}}'
+          '$zodSuffix.ts',
+      '$tsDir/{{}}'
+          '$drizzleSuffix.ts',
+    ],
+  };
+}
+
+// ── GeneratorRegistry ─────────────────────────────────────────────────────────
+
+/// Lightweight in-process registry for [SchemixGenerator] instances.
+///
+/// Generator packages call [GeneratorRegistry.register] from their builder
+/// factory before returning the builder. The file builder looks generators up
+/// by [SchemixGenerator.id] at generation time.
+// abstract final class GeneratorRegistry {
+//   static final Map<String, SchemixGenerator> _generators = {};
+
+//   /// Registers [generator] so the file builder can dispatch to it.
+//   /// Re-registering with the same [SchemixGenerator.id] overwrites the previous entry.
+//   static void register(SchemixGenerator generator) {
+//     _generators[generator.id] = generator;
+//   }
+
+//   static SchemixGenerator? find(String id) => _generators[id];
+// }
+
+// ── Builder ───────────────────────────────────────────────────────────────────
+
 final class _SchemixFileBuilder implements Builder {
-  const _SchemixFileBuilder(this._options);
+  _SchemixFileBuilder(BuilderOptions options)
+    : _options = options,
+      _paths = _OutputPaths.fromOptions(options);
+
   final BuilderOptions _options;
+  final _OutputPaths _paths;
 
   static final _log = const SchemixLogger('builder');
 
   static const _registryAsset = 'lib/schemix_registry.json';
 
   @override
-  Map<String, List<String>> get buildExtensions => const {
-    r'^lib/{{}}.dart': [
-      'lib/{{}}.schemix.dart',
-      'lib/{{}}.table.dart',
-      'gen/{{}}.g.ts',
-      'gen/{{}}.drizzle.ts',
-    ],
-  };
+  Map<String, List<String>> get buildExtensions => _paths.buildExtensions;
 
   @override
   Future<void> build(BuildStep buildStep) async {
@@ -103,16 +189,34 @@ final class _SchemixFileBuilder implements Builder {
     );
 
     // ── Dispatch to generators ─────────────────────────────────────────────
+    // outputs[0] = serializable (.schemix.dart)
+    // outputs[1] = drift        (.table.dart)
+    // outputs[2] = zod/ts       (.g.ts)
+    // outputs[3] = drizzle      (.drizzle.ts)
 
     final outputs = buildStep.allowedOutputs.toList(growable: false);
 
     if (outputs.isNotEmpty) {
+      final serializableSource = _runGenerator('serializable', relevant, context);
       await _writeOutput(
         buildStep,
         outputs[0],
-        _runGenerator('serializable', relevant, context),
+        serializableSource,
         'SerializableGenerator',
       );
+      if (serializableSource != null) {
+        final serializableFile = inputId.path
+            .split('/')
+            .last
+            .replaceAll('.dart', '${_paths.serializableSuffix}.dart');
+        final rawSource = await buildStep.readAsString(inputId);
+        if (!rawSource.contains("part '$serializableFile'")) {
+          _log.outputWarning(
+            inputId.path,
+            "generates Serializable but missing: part '$serializableFile';",
+          );
+        }
+      }
     }
 
     if (outputs.length > 1) {
@@ -121,17 +225,8 @@ final class _SchemixFileBuilder implements Builder {
         _log.outputWrite(outputs[1].path, 'DriftGenerator');
         await buildStep.writeAsString(outputs[1], driftSource);
 
-        final tableFile = inputId.path
-            .split('/')
-            .last
-            .replaceAll('.dart', '.table.dart');
-        final rawSource = await buildStep.readAsString(inputId);
-        if (!rawSource.contains("part '$tableFile'")) {
-          _log.outputWarning(
-            inputId.path,
-            "generates Drift table but missing: part '$tableFile';",
-          );
-        }
+        // The .table.dart files are standalone libraries, so they don't
+        // need to be declared as parts. Warning removed.
       } else {
         _log.outputSkip(outputs[1].path, 'DriftGenerator empty');
       }
@@ -156,11 +251,10 @@ final class _SchemixFileBuilder implements Builder {
     }
   }
 
-  // ── Generator dispatch ────────────────────────────────────────────────────
+  // ── Generator dispatch ─────────────────────────────────────────────────────
 
-  /// Locates the registered generator for [id], runs it over [classes],
-  /// and returns the concatenated output for the primary extension, or null
-  /// if no generator is registered or all output was empty.
+  /// Drives [id]-registered generator over [classes] and returns the
+  /// concatenated output, or `null` when nothing was produced.
   String? _runGenerator(
     String id,
     List<ClassInfo> classes,
@@ -172,27 +266,15 @@ final class _SchemixFileBuilder implements Builder {
       return null;
     }
 
-    final buf = StringBuffer();
     try {
-      for (final classInfo in classes) {
-        if (!generator.shouldRun(classInfo)) continue;
-        final output = generator.generate(classInfo, context);
-        for (final entry in output.outputs.entries) {
-          if (entry.value != null && entry.value!.trim().isNotEmpty) {
-            buf.writeln(entry.value);
-          }
-        }
-      }
+      return generator.generateForFile(classes, context);
     } catch (e, st) {
       _log.error(context.sourceAssetPath, '$id threw: $e', st);
       return null;
     }
-
-    final result = buf.toString().trim();
-    return result.isEmpty ? null : result;
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Future<void> _writeOutput(
     BuildStep buildStep,
@@ -200,12 +282,12 @@ final class _SchemixFileBuilder implements Builder {
     String? source,
     String generatorName,
   ) async {
-    if (source != null && source.trim().isNotEmpty) {
-      _log.outputWrite(output.path, generatorName);
-      await buildStep.writeAsString(output, source);
-    } else {
-      _log.outputSkip(output.path, '$generatorName produced empty output');
+    if (source == null) {
+      _log.outputSkip(output.path, '$generatorName empty');
+      return;
     }
+    _log.outputWrite(output.path, generatorName);
+    await buildStep.writeAsString(output, source);
   }
 
   Future<LibraryElement?> _resolveLibrary(
@@ -213,33 +295,10 @@ final class _SchemixFileBuilder implements Builder {
     AssetId inputId,
   ) async {
     try {
-      return await buildStep.inputLibrary;
-    } catch (e, st) {
-      _log.error(inputId.path, e, st);
+      return await buildStep.resolver.libraryFor(inputId);
+    } catch (e) {
+      _log.buildSkip(inputId.path, 'not a library: $e');
       return null;
     }
   }
-}
-
-// ── Generator registry ────────────────────────────────────────────────────────
-
-/// Lightweight in-process registry for [SchemixGenerator] instances.
-///
-/// Generator packages call [GeneratorRegistry.register] from their builder
-/// factory before returning the builder. The file builder looks generators up
-/// by [SchemixGenerator.id] at generation time.
-///
-/// This is an interim design for Milestone 1. The long-term approach (declared
-/// via `build.yaml` required_inputs and builder options) is tracked as an open
-/// question in the architecture document.
-abstract final class GeneratorRegistry {
-  static final Map<String, SchemixGenerator> _generators = {};
-
-  /// Registers [generator] so the file builder can dispatch to it.
-  /// Re-registering with the same [SchemixGenerator.id] overwrites the previous entry.
-  static void register(SchemixGenerator generator) {
-    _generators[generator.id] = generator;
-  }
-
-  static SchemixGenerator? find(String id) => _generators[id];
 }

@@ -476,8 +476,6 @@ FieldPlatformFlags _extractPlatform(FieldElement field)
 
 ### Extensibility Strategy
 
-Third-party generators:
-
 1. Add `schemix` as a dependency.
 2. Implement `SchemixGenerator`.
 3. Declare a `build.yaml` builder that lists `lib/schemix_registry.json` in `required_inputs`.

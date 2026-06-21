@@ -10,8 +10,27 @@ repository: https://github.com/adilasharaf/schemix
 # Package Discovery
 # ──────────────────────────────────────────────
 packages:
+  # Core
   - packages/schemix
   - packages/schemix_builder
+
+  # Generators
   - packages/serializable_schemix_generator
   - packages/drift_schemix_generator
   - packages/drizzle_schemix_generator
+  - packages/zod_schemix_generator
+  - packages/ts_schemix_generator
+
+  # Future generators
+  # - packages/openapi_schemix_generator
+  # - packages/graphql_schemix_generator
+  # - packages/prisma_schemix_generator
+  # - packages/kotlin_schemix_generator
+  # - packages/swift_schemix_generator
+
+  # Examples
+  # - examples/basic
+  - example
+
+  # Internal tools
+  # - tools/schemix_cli

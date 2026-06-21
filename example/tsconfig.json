@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2020"],
+    "target": "es2022",
+    "declaration": true,
+    "declarationMap": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "rootDir": "ts",
+    "outDir": "dist",
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true
+  },
+  "include": ["ts/**/*.ts"],
+  "exclude": ["node_modules", "dist", "lib", "test", "example"]
+}

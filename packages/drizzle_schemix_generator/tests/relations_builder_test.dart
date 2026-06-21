@@ -8,7 +8,6 @@ ClassInfo _cls(String name, List<FieldInfo> fields) => ClassInfo(
   name: name,
   assetPath: 'lib/models.dart',
   hasSchemix: true,
-  generators: const GeneratorFlags(drizzle: true),
   ownFields: fields,
 );
 
@@ -142,6 +141,71 @@ void main() {
       final lines = _builder.generateRelations(cls);
       expect(lines.first, contains('relations('));
       expect(lines.last, equals('}));'));
+    });
+  });
+
+  group('DrizzleRelationsBuilder — destructuring guard', () {
+    test('only-many relations omit one from destructure', () {
+      final cls = _cls('User', const [
+        FieldInfo(name: 'id', dartType: 'String', isNullable: false),
+        FieldInfo(
+          name: 'posts',
+          dartType: 'Post',
+          isNullable: false,
+          relation: FieldRelationInfo(
+            kind: RelationKind.hasMany,
+            targetTypeName: 'Post',
+          ),
+        ),
+      ]);
+      final header = _builder.generateRelations(cls).first;
+      expect(header, contains('{ many }'));
+      expect(header, isNot(contains('one')));
+    });
+
+    test('only-one relations omit many from destructure', () {
+      final cls = _cls('Post', const [
+        FieldInfo(name: 'id', dartType: 'String', isNullable: false),
+        FieldInfo(
+          name: 'userId',
+          dartType: 'User',
+          isNullable: false,
+          relation: FieldRelationInfo(
+            kind: RelationKind.belongsTo,
+            targetTypeName: 'User',
+          ),
+        ),
+      ]);
+      final header = _builder.generateRelations(cls).first;
+      expect(header, contains('{ one }'));
+      expect(header, isNot(contains('many')));
+    });
+
+    test('mixed relations include both one and many in destructure', () {
+      final cls = _cls('User', const [
+        FieldInfo(name: 'id', dartType: 'String', isNullable: false),
+        FieldInfo(
+          name: 'profileId',
+          dartType: 'Profile',
+          isNullable: true,
+          relation: FieldRelationInfo(
+            kind: RelationKind.belongsTo,
+            targetTypeName: 'Profile',
+          ),
+        ),
+        FieldInfo(
+          name: 'posts',
+          dartType: 'Post',
+          isNullable: false,
+          relation: FieldRelationInfo(
+            kind: RelationKind.hasMany,
+            targetTypeName: 'Post',
+          ),
+        ),
+      ]);
+      final header = _builder.generateRelations(cls).first;
+      expect(header, contains('one'));
+      expect(header, contains('many'));
     });
   });
 }

@@ -4,3 +4,4 @@ export 'src/graph_resolver.dart' show ZodGraphResolver;
 export 'src/schema_generator.dart' show ZodSchemaGenerator;
 export 'src/type_resolver.dart' show ZodTypeResolver, DefaultResolver;
 export 'src/utils.dart' show tsKey, skipField;
+  export 'src/no_zod.dart' show NoZod;

@@ -3,8 +3,9 @@ import 'package:schemix_builder/schemix_builder.dart';
 
 /// Resolves the set of field names that are constructor parameters for [cls].
 ///
-/// Returns an empty set when the class uses a no-arg constructor — generators
-/// should use cascade assignments for all fields in that case.
+/// Returns [ClassInfo.ctorParamNames] when it is non-empty.
+/// Returns an empty set when [ClassInfo.ctorParamNames] is empty — this means
+/// the class uses a no-arg constructor and all fields should be cascade-assigned.
 final class CtorParamResolver {
   const CtorParamResolver(this._log);
   final SchemixLogger _log;
@@ -13,31 +14,13 @@ final class CtorParamResolver {
     if (cls.ctorParamNames.isNotEmpty) {
       _log.verbose(
         '   ctor params  | ${cls.name}  '
-        'source=metadata  count=${cls.ctorParamNames.length}  '
+        'count=${cls.ctorParamNames.length}  '
         '${cls.ctorParamNames}',
       );
       return cls.ctorParamNames;
     }
 
-    _log.verbose('   ctor params  | ${cls.name}  source=heuristic');
-    return _heuristic(cls);
-  }
-
-  /// Infers constructor parameters from field shape when [ClassInfo.ctorParamNames]
-  /// is unavailable. Non-nullable fields and `late required` fields are treated
-  /// as constructor parameters; everything else is cascade-assigned.
-  Set<String> _heuristic(ClassInfo cls) {
-    final params = <String>{
-      for (final f in cls.allFields)
-        if (!f.isIgnored && (!f.isNullable || (f.isLate && f.isRequired)))
-          f.name,
-    };
-
-    _log.verbose(
-      '   ctor params  | ${cls.name}  '
-      'heuristic count=${params.length}  $params',
-    );
-
-    return params;
+    _log.verbose('   ctor params  | ${cls.name}  no-arg ctor — cascade only');
+    return const {};
   }
 }

@@ -18,8 +18,23 @@ final class DrizzleRelationsBuilder {
 
     final tableVar = tableVarName(cls.name);
 
+    // Only destructure the identifiers that are actually used, to avoid
+    // TypeScript's 'declared but never read' warning.
+    final needsOne = relationFields.any(
+      (f) =>
+          f.relation.kind == RelationKind.belongsTo ||
+          f.relation.kind == RelationKind.hasOne,
+    );
+    final needsMany = relationFields.any(
+      (f) =>
+          f.relation.kind == RelationKind.hasMany ||
+          f.relation.kind == RelationKind.manyToMany,
+    );
+
+    final destructure = [if (needsOne) 'one', if (needsMany) 'many'].join(', ');
+
     return [
-      'export const ${tableVar}Relations = relations($tableVar, ({ one, many }) => ({',
+      'export const ${tableVar}Relations = relations($tableVar, ({ $destructure }) => ({',
       for (final field in relationFields)
         if (field.relation.targetTypeName case final target?)
           _relationLine(cls.name, tableVar, field, target),

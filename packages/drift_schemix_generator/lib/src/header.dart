@@ -17,7 +17,7 @@ final class DriftHeader {
     '',
     "import 'package:drift/drift.dart';",
     "import 'package:uuid/uuid.dart';",
-    "import 'package:$modelsPackage/$modelsPackage.dart';",
+    "import 'package:$modelsPackage/schemix.dart';",
     '',
     '',
   ];

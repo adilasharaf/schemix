@@ -1,0 +1,29 @@
+name: example
+description: >
+  Schemix full-stack example — one annotated Dart model generates Drift tables,
+  Drizzle schemas, Zod schemas, TypeScript interfaces, and JSON serialization.
+publish_to: none
+version: 0.0.1
+
+resolution: workspace
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+dependencies:
+  schemix: any
+  drift: ^2.24.2
+  uuid: ^4.5.1
+
+dev_dependencies:
+  schemix_builder: any
+  drift_schemix_generator: any
+  drizzle_schemix_generator: any
+  zod_schemix_generator: any
+  ts_schemix_generator: any
+  serializable_schemix_generator: any
+  gorm_schemix_generator: any
+  go_serializable_schemix_generator: any
+  build_runner: ^2.15.0
+  lints: ^6.1.0
+  drift_dev: ^2.31.0

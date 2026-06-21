@@ -75,7 +75,7 @@ void main() {
   group('DriftColumnBuilder.buildColumn — regular fields', () {
     test('String field returns TextColumn getter', () {
       const f = FieldInfo(name: 'email', dartType: 'String', isNullable: false);
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('TextColumn'));
       expect(result, contains('get email'));
@@ -84,14 +84,14 @@ void main() {
 
     test('nullable bool field includes .nullable()', () {
       const f = FieldInfo(name: 'active', dartType: 'bool', isNullable: true);
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('.nullable()'));
     });
 
     test('unsupported type (Map) returns null', () {
       const f = FieldInfo(name: 'meta', dartType: 'Map', isNullable: false);
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNull);
     });
   });
@@ -107,7 +107,7 @@ void main() {
           targetTypeName: 'User',
         ),
       );
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('TextColumn'));
       expect(result, contains("named('user_id')"));
@@ -122,10 +122,10 @@ void main() {
         isNullable: false,
         isEnum: true,
       );
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('IntColumn'));
-      expect(result, contains('.map(_userStatusConverter)'));
+      expect(result, contains(r'.map(UserTable.$userStatusConverter)'));
     });
 
     test('nullable enum field includes .nullable()', () {
@@ -135,7 +135,7 @@ void main() {
         isNullable: true,
         isEnum: true,
       );
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('.nullable()'));
     });
@@ -151,7 +151,7 @@ void main() {
           isNullable: false,
           db: FieldDbInfo(isPrimaryKey: true, autoGenerate: true),
         );
-        final result = _builder.buildColumn(f);
+        final result = _builder.buildColumn(f, 'UserTable');
         expect(result, isNotNull);
         expect(result, contains('clientDefault'));
         expect(result, contains('Uuid'));
@@ -165,7 +165,7 @@ void main() {
         isNullable: false,
         db: FieldDbInfo(isPrimaryKey: true, isAutoIncrement: true),
       );
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains('autoIncrement()'));
     });
@@ -177,7 +177,7 @@ void main() {
         isNullable: false,
         db: FieldDbInfo(isPrimaryKey: true),
       );
-      final result = _builder.buildColumn(f);
+      final result = _builder.buildColumn(f, 'UserTable');
       expect(result, isNotNull);
       expect(result, contains("named('id')"));
     });

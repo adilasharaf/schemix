@@ -8,6 +8,19 @@ final class JsonExprBuilder {
     final nullable = field.isNullable;
     final type = field.dartType;
 
+    if (field.converter.hasDateTimeConverter) {
+      return 'const DateTimeConverter().fromJson($src as Object)';
+    }
+    if (field.converter.hasDateTimeNullableConverter) {
+      return 'const DateTimeNullableConverter().fromJson($src)';
+    }
+    if (field.converter.hasDateTimeListConverter) {
+      return 'const DateTimeListConverter().fromJson($src as List<dynamic>)';
+    }
+    if (field.converter.customConverterClass != null) {
+      return 'const ${field.converter.customConverterClass}().fromJson($src)';
+    }
+
     if (field.isEnum) return _enumFromJson(field, src, nullable);
     if (field.isList) return _listFromJson(field, src, nullable);
     if (field.isMap) return _mapFromJson(field, src, nullable);
@@ -38,6 +51,19 @@ final class JsonExprBuilder {
   String toJson(FieldInfo field, String src) {
     final op = field.isNullable ? '?.' : '.';
     final type = field.dartType;
+
+    if (field.converter.hasDateTimeConverter) {
+      return 'const DateTimeConverter().toJson($src)';
+    }
+    if (field.converter.hasDateTimeNullableConverter) {
+      return 'const DateTimeNullableConverter().toJson($src)';
+    }
+    if (field.converter.hasDateTimeListConverter) {
+      return 'const DateTimeListConverter().toJson($src)';
+    }
+    if (field.converter.customConverterClass != null) {
+      return 'const ${field.converter.customConverterClass}().toJson($src)';
+    }
 
     if (field.isEnum) return field.isNullable ? '$src?.name' : '$src.name';
 

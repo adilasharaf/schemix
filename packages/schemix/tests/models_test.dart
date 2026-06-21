@@ -179,42 +179,55 @@ void main() {
     });
   });
 
-  group('GeneratorFlags', () {
-    test('zod defaults to true, drift and drizzle default to false', () {
-      const flags = GeneratorFlags();
-      expect(flags.zod, isTrue);
-      expect(flags.drift, isFalse);
-      expect(flags.drizzle, isFalse);
+  group('ClassInfo.extensions', () {
+    test('defaults to empty map', () {
+      const cls = ClassInfo(name: 'User', assetPath: 'lib/user.dart');
+      expect(cls.extensions, isEmpty);
     });
 
-    test('copyWith overrides individual flags', () {
-      const flags = GeneratorFlags();
-      final updated = flags.copyWith(drift: true, drizzle: true);
-      expect(updated.drift, isTrue);
-      expect(updated.drizzle, isTrue);
-      expect(updated.zod, isTrue);
+    test('extensions["drizzle"] != false means generate (absent key)', () {
+      const cls = ClassInfo(name: 'User', assetPath: 'lib/user.dart');
+      expect(cls.extensions['drizzle'] != false, isTrue);
+    });
+
+    test('extensions["drizzle"] == false means suppressed', () {
+      final cls = const ClassInfo(
+        name: 'User',
+        assetPath: 'lib/user.dart',
+        extensions: {'drizzle': false},
+      );
+      expect(cls.extensions['drizzle'], false);
+    });
+
+    test('suppressing one generator does not affect others', () {
+      final cls = const ClassInfo(
+        name: 'User',
+        assetPath: 'lib/user.dart',
+        extensions: {'drizzle': false},
+      );
+      expect(cls.extensions['zod'] != false, isTrue);
+      expect(cls.extensions['drift'] != false, isTrue);
     });
   });
 
-  group('FieldValidation.hasConstraints', () {
-    test('returns false for default (no constraints)', () {
-      const v = FieldValidation();
-      expect(v.hasConstraints, isFalse);
+  group('TypeInfo.extensions', () {
+    test('defaults to empty map', () {
+      const info = TypeInfo(
+        name: 'User',
+        isEnum: false,
+        sourceAssetPath: 'lib/user.dart',
+      );
+      expect(info.extensions, isEmpty);
     });
 
-    test('returns true when required is set', () {
-      const v = FieldValidation(required: true);
-      expect(v.hasConstraints, isTrue);
-    });
-
-    test('returns true when isEmail is set', () {
-      const v = FieldValidation(isEmail: true);
-      expect(v.hasConstraints, isTrue);
-    });
-
-    test('returns true when min is set', () {
-      const v = FieldValidation(min: 0);
-      expect(v.hasConstraints, isTrue);
+    test('extensions["zod"] == false suppresses zod cross-file import', () {
+      final info = const TypeInfo(
+        name: 'Tag',
+        isEnum: false,
+        sourceAssetPath: 'lib/tag.dart',
+        extensions: {'zod': false},
+      );
+      expect(info.extensions['zod'], false);
     });
   });
 }

@@ -30,7 +30,7 @@ final class DriftTableBodyBuilder {
         continue;
       }
 
-      final col = _columnBuilder.buildColumn(field);
+      final col = _columnBuilder.buildColumn(field, '${cls.name}Table');
       if (col != null) {
         columns.add('  $col');
       } else {

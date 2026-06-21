@@ -21,15 +21,14 @@ final class DriftColumnBuilder {
 
   /// Returns the full getter declaration for [field], or `null` if the field
   /// has no Drift type mapping (e.g. `Map`, `List`, unsupported custom types).
-  String? buildColumn(FieldInfo field) {
+  String? buildColumn(FieldInfo field, String tableName) {
     // belongsTo FK columns are always stored as text (the FK ID string).
     if (field.relation.kind == RelationKind.belongsTo) {
       return _buildBelongsToColumn(field);
     }
 
-    // Enum fields are stored as integers via EnumIndexConverter.
     if (field.isEnum) {
-      return _buildEnumColumn(field);
+      return _buildEnumColumn(field, tableName);
     }
 
     // Primary key fields have their own dedicated builder.
@@ -72,14 +71,15 @@ final class DriftColumnBuilder {
 
   String _buildBelongsToColumn(FieldInfo field) {
     final colName = field.serialization.effectiveJsonName(field.name).snakeCase;
-    return "TextColumn get ${field.name} => text().named('$colName')();";
+    final nullable = field.isNullable ? '.nullable()' : '';
+    return "TextColumn get ${field.name} => text().named('$colName')$nullable();";
   }
 
-  String _buildEnumColumn(FieldInfo field) {
+  String _buildEnumColumn(FieldInfo field, String tableName) {
     final colName = field.serialization.effectiveJsonName(field.name).snakeCase;
     final cn = field.dartType.converterName;
     final nullable = field.isNullable ? '.nullable()' : '';
-    return "IntColumn get ${field.name} => integer().named('$colName')$nullable.map($cn)();";
+    return "IntColumn get ${field.name} => integer().named('$colName')$nullable.map($tableName.$cn)();";
   }
 
   String _buildPrimaryKeyColumn(

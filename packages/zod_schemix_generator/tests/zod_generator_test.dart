@@ -1,7 +1,7 @@
 // Golden test: verifies ZodGenerator.generateForFile output for a User model.
 
-import 'package:schemix/models.dart';
-import 'package:schemix/src/generator_api.dart';
+import 'package:build/build.dart';
+import 'package:schemix/schemix.dart';
 import 'package:test/test.dart';
 import 'package:zod_schemix_generator/zod_schemix_generator.dart';
 
@@ -34,7 +34,26 @@ final class _StubGraph implements TypeGraph {
     required String typeName,
     required String fromSourceAssetPath,
   }) => null;
+
+  @override
+  bool canImport(String typeName, String generatorId) => true;
 }
+
+final class _NoOpOptions implements BuilderOptions {
+  const _NoOpOptions();
+  @override
+  Map<String, dynamic> get config => const {};
+  @override
+  bool get isRoot => true;
+  @override
+  BuilderOptions overrideWith(BuilderOptions? other) => BuilderOptions(config);
+}
+
+GeneratorContext _ctx(String path, [TypeGraph? graph]) => GeneratorContext(
+  typeGraph: graph ?? const _StubGraph(models: {}, enums: {}),
+  options: const _NoOpOptions(),
+  sourceAssetPath: path,
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -42,7 +61,6 @@ final _userClass = const ClassInfo(
   name: 'User',
   assetPath: 'lib/models/user.dart',
   hasSchemix: true,
-  generators: GeneratorFlags(zod: true),
   ownFields: [
     FieldInfo(
       name: 'id',
@@ -69,20 +87,44 @@ final _userClass = const ClassInfo(
 
 void main() {
   final generator = ZodGenerator();
-
   group('ZodGenerator.shouldRun', () {
-    test('returns true when generators.zod is true and hasSchemix', () {
-      expect(generator.shouldRun(_userClass), isTrue);
+    test('runs for enum (no extensions check needed)', () {
+      const cls = ClassInfo(
+        name: 'Status',
+        assetPath: 'lib/status.dart',
+        isEnum: true,
+        hasSchemix: true,
+      );
+      expect(ZodGenerator().shouldRun(cls), isTrue);
     });
 
-    test('returns false when generators.zod is false', () {
-      final cls = const ClassInfo(
-        name: 'Post',
-        assetPath: 'lib/post.dart',
+    test('runs when hasSchemix and no skip extension', () {
+      const cls = ClassInfo(
+        name: 'User',
+        assetPath: 'lib/user.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: false),
       );
-      expect(generator.shouldRun(cls), isFalse);
+      expect(ZodGenerator().shouldRun(cls), isTrue);
+    });
+
+    test('suppressed when extensions[zod] == false', () {
+      final cls = const ClassInfo(
+        name: 'ServerOnly',
+        assetPath: 'lib/server_only.dart',
+        hasSchemix: true,
+        extensions: {'zod': false},
+      );
+      expect(ZodGenerator().shouldRun(cls), isFalse);
+    });
+
+    test('skipped when manualImplementation', () {
+      const cls = ClassInfo(
+        name: 'Manual',
+        assetPath: 'lib/manual.dart',
+        hasSchemix: true,
+        manualImplementation: true,
+      );
+      expect(ZodGenerator().shouldRun(cls), isFalse);
     });
   });
 
@@ -92,9 +134,8 @@ void main() {
     setUpAll(() {
       output = generator.generateForFile(
         [_userClass],
-        'lib/models/user.dart',
-        const _StubGraph(enums: {}, models: {}),
-      );
+        _ctx('lib/models/user.dart'),
+      )!;
     });
 
     test('output is non-empty', () {
@@ -133,7 +174,6 @@ void main() {
         name: 'Token',
         assetPath: 'lib/token.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: true),
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
           FieldInfo(
@@ -147,9 +187,8 @@ void main() {
 
       final output = generator.generateForFile(
         [cls],
-        'lib/token.dart',
-        const _StubGraph(enums: {}, models: {}),
-      );
+        _ctx('lib/token.dart'),
+      )!;
 
       expect(output, contains('id'));
       expect(output, isNot(contains('rawToken')));
@@ -160,7 +199,6 @@ void main() {
         name: 'Config',
         assetPath: 'lib/config.dart',
         hasSchemix: true,
-        generators: GeneratorFlags(zod: true),
         ownFields: [
           FieldInfo(name: 'id', dartType: 'String', isNullable: false),
           FieldInfo(
@@ -174,9 +212,8 @@ void main() {
 
       final output = generator.generateForFile(
         [cls],
-        'lib/config.dart',
-        const _StubGraph(enums: {}, models: {}),
-      );
+        _ctx('lib/config.dart'),
+      )!;
 
       expect(output, isNot(contains('localCache')));
     });
